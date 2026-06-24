@@ -1,0 +1,669 @@
+/* ============================================================
+   ANALYTICA — Ultra-Dark Cosmic Auth (Inspired by Reference UI)
+   ============================================================ */
+
+/* ── Auth Page — Full Screen Centered ──────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #07000f;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 100px 20px 60px;
+}
+
+/* Cosmic purple/magenta ambient orbs — exactly like reference */
+.auth-page::before {
+  content: '';
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180, 40, 220, 0.35) 0%, rgba(120, 0, 180, 0.18) 40%, transparent 70%);
+  top: -120px;
+  left: -160px;
+  animation: float 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.auth-page::after {
+  content: '';
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 160, 200, 0.15) 0%, transparent 70%);
+  bottom: -80px;
+  right: -60px;
+  animation: float 15s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+
+/* ── Top Auth Navbar ────────────────────────────────────────── */
+.auth-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 48px;
+  z-index: 100;
+  background: rgba(7, 0, 15, 0.7);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.auth-navbar-brand {
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #d946ef, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-navbar-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.auth-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.auth-navbar-link {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.auth-navbar-link:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.auth-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-nav-btn-outline {
+  padding: 7px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+}
+
+.auth-nav-btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.auth-nav-btn-solid {
+  padding: 7px 20px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #d946ef, #8b5cf6);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(217, 70, 239, 0.3);
+}
+
+.auth-nav-btn-solid:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(217, 70, 239, 0.45);
+}
+
+/* ── Auth Card ──────────────────────────────────────────────── */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(14, 8, 24, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(180, 80, 255, 0.12);
+  border-radius: 20px;
+  padding: 40px 40px 36px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 60px rgba(150, 40, 220, 0.08);
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Subtle shimmer glow on card border */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(217, 70, 239, 0.2), transparent 50%, rgba(139, 92, 246, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Card Header ────────────────────────────────────────────── */
+.auth-card-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 6px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #d946ef, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
+}
+
+.auth-card-logo {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 22px rgba(217, 70, 239, 0.65));
+  animation: float 6s ease-in-out infinite;
+}
+
+.auth-card-title {
+  text-align: center;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.auth-card-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+}
+
+/* ── Role Tabs ──────────────────────────────────────────────── */
+.auth-role-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  margin-bottom: 28px;
+}
+
+.auth-role-tab {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.auth-role-tab.active {
+  background: linear-gradient(135deg, #d946ef, #8b5cf6);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(217, 70, 239, 0.3);
+}
+
+.auth-role-tab:not(.active):hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Role Badge (description below tabs) ───────────────────── */
+.auth-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(217, 70, 239, 0.06);
+  border: 1px solid rgba(217, 70, 239, 0.12);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.auth-role-badge-icon {
+  font-size: 1rem;
+}
+
+.auth-role-badge-text {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.4;
+}
+
+/* ── Form Fields ────────────────────────────────────────────── */
+.auth-form-group {
+  margin-bottom: 18px;
+}
+
+.auth-form-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.auth-form-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 11px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  transition: all var(--transition-normal);
+  outline: none;
+}
+
+.auth-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.auth-form-input:focus {
+  border-color: rgba(217, 70, 239, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.08), 0 0 20px rgba(217, 70, 239, 0.06);
+}
+
+/* ── Remember Me + Forgot ───────────────────────────────────── */
+.auth-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  user-select: none;
+}
+
+.auth-remember input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #d946ef;
+  cursor: pointer;
+}
+
+.auth-forgot {
+  color: #d946ef;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.auth-forgot:hover {
+  color: #c026d3;
+}
+
+/* ── Submit Button ──────────────────────────────────────────── */
+.auth-submit-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d946ef 0%, #9333ea 100%);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 20px rgba(217, 70, 239, 0.35);
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(217, 70, 239, 0.5);
+}
+
+.auth-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Auth Switch ────────────────────────────────────────────── */
+.auth-switch {
+  text-align: center;
+  margin-top: 22px;
+  color: var(--text-muted);
+  font-size: 0.83rem;
+}
+
+.auth-switch a,
+.auth-switch-link {
+  color: #d946ef;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 5px;
+  transition: color var(--transition-fast);
+}
+
+.auth-switch a:hover,
+.auth-switch-link:hover {
+  color: #c026d3;
+  text-decoration: underline;
+}
+
+/* ── Error ──────────────────────────────────────────────────── */
+.auth-error {
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  color: #f43f5e;
+  padding: 11px 16px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+/* ── Password Input ─────────────────────────────────────────── */
+.password-input-container {
+  position: relative;
+}
+
+.password-input-container .auth-form-input {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ── Password Strength ──────────────────────────────────────── */
+.password-strength {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.password-strength-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.password-strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 300ms ease, background-color 300ms ease;
+}
+
+.password-strength-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 44px;
+}
+
+.strength-weak .password-strength-fill { width: 25%; background: #f43f5e; }
+.strength-weak .password-strength-text { color: #f43f5e; }
+.strength-fair .password-strength-fill { width: 50%; background: #f59e0b; }
+.strength-fair .password-strength-text { color: #f59e0b; }
+.strength-good .password-strength-fill { width: 75%; background: #3b82f6; }
+.strength-good .password-strength-text { color: #3b82f6; }
+.strength-strong .password-strength-fill { width: 100%; background: #10b981; }
+.strength-strong .password-strength-text { color: #10b981; }
+
+/* ── Keep old .auth-page .form-input for compatibility ─────── */
+.auth-page .form-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 11px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  transition: all var(--transition-normal);
+  outline: none;
+  appearance: none;
+}
+
+.auth-page .form-input::placeholder { color: rgba(255,255,255,0.2); }
+.auth-page .form-input:focus {
+  border-color: rgba(217, 70, 239, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.08);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .auth-navbar { padding: 14px 20px; }
+  .auth-navbar-links { display: none; }
+  .auth-card { padding: 32px 24px 28px; }
+  .auth-card-title { font-size: 1.4rem; }
+}
+
+/* ── Forgot Password Button (replaces old <a> link) ──────── */
+.auth-forgot {
+  background: none;
+  border: none;
+  color: #d946ef;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+  font-family: var(--font-sans);
+}
+.auth-forgot:hover { color: #c026d3; }
+
+/* ── Forgot Password Modal Overlay ───────────────────────── */
+.fp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Forgot Password Modal Card ──────────────────────────── */
+.fp-modal {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(14, 8, 24, 0.98);
+  border: 1px solid rgba(217, 70, 239, 0.2);
+  border-radius: 20px;
+  padding: 36px 36px 32px;
+  position: relative;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.7),
+    0 0 60px rgba(150, 40, 220, 0.12);
+  animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Close Button ────────────────────────────────────────── */
+.fp-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.fp-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* ── Step Icon ───────────────────────────────────────────── */
+.fp-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(217, 70, 239, 0.1);
+  border: 1px solid rgba(217, 70, 239, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #d946ef;
+  margin: 0 auto 18px;
+}
+.fp-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  font-size: 2rem;
+  width: 68px;
+  height: 68px;
+}
+
+/* ── Title / Subtitle ────────────────────────────────────── */
+.fp-title {
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.fp-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+.fp-subtitle strong {
+  color: #d946ef;
+}
+
+/* ── Back Button ─────────────────────────────────────────── */
+.fp-back-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.fp-back-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+}
+
+/* ── Success State ───────────────────────────────────────── */
+.fp-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.fp-success .auth-submit-btn {
+  margin-top: 6px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+}
+.fp-success .auth-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.5);
+}
+
