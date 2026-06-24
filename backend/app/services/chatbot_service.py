@@ -37,46 +37,89 @@ def initialize_chatbot():
 
 
 def _build_contextual_prompt(message: str, prediction_context: Optional[Dict[str, Any]] = None) -> str:
-    """Build a contextual prompt incorporating prediction data."""
-    if not prediction_context:
-        return message
+    """Build a contextual prompt incorporating prediction data and currency settings."""
+    ctx = []
+    
+    if prediction_context:
+        # Extract currency information
+        curr_code = prediction_context.get("currency_code")
+        curr_symbol = prediction_context.get("currency_symbol")
+        curr_rate = prediction_context.get("currency_rate")
+        
+        if curr_code and curr_symbol and curr_rate:
+            ctx.append("[USER SETTINGS]")
+            ctx.append(f"Selected Currency: {curr_code} ({curr_symbol})")
+            ctx.append(f"Currency Conversion Rate (1 USD to {curr_code}): {curr_rate}")
+            ctx.append(f"IMPORTANT: Please respond in {curr_code} ({curr_symbol}). Always convert any financial/monetary values (originally in USD) using the conversion rate {curr_rate} and format them with {curr_symbol}.")
+            ctx.append("")
 
-    ctx = ["[PREDICTION CONTEXT]"]
-    if "churn_probability" in prediction_context:
-        ctx.append(f"Churn Probability: {prediction_context['churn_probability'] * 100:.1f}%")
-    if "risk_level" in prediction_context:
-        ctx.append(f"Risk Level: {prediction_context['risk_level']}")
-    if "contributing_factors" in prediction_context:
-        ctx.append("Top Risk Factors:")
-        for f in prediction_context["contributing_factors"]:
-            ctx.append(f"  - {f.get('feature')}: {f.get('value', 'N/A')} (importance: {f.get('importance', 0) * 100:.1f}%)")
-    for key in ["tenure", "monthly_charges", "contract", "internet_service", "tech_support", "payment_method"]:
-        if key in prediction_context:
-            ctx.append(f"{key}: {prediction_context[key]}")
-    ctx.append(f"\n[USER QUESTION] {message}")
-    ctx.append("\nPlease answer based on the prediction context above. Be specific and actionable.")
-    return "\n".join(ctx)
+        # Add prediction context if available
+        has_prediction = "churn_probability" in prediction_context or "risk_level" in prediction_context
+        if has_prediction:
+            ctx.append("[PREDICTION CONTEXT]")
+            if "churn_probability" in prediction_context:
+                ctx.append(f"Churn Probability: {prediction_context['churn_probability'] * 100:.1f}%")
+            if "risk_level" in prediction_context:
+                ctx.append(f"Risk Level: {prediction_context['risk_level']}")
+            if "contributing_factors" in prediction_context:
+                ctx.append("Top Risk Factors:")
+                for f in prediction_context["contributing_factors"]:
+                    ctx.append(f"  - {f.get('feature')}: {f.get('value', 'N/A')} (importance: {f.get('importance', 0) * 100:.1f}%)")
+            for key in ["tenure", "monthly_charges", "contract", "internet_service", "tech_support", "payment_method"]:
+                if key in prediction_context:
+                    val = prediction_context[key]
+                    if key == "monthly_charges" and curr_rate:
+                        val = f"{curr_symbol}{float(val) * float(curr_rate):.2f}"
+                    ctx.append(f"{key}: {val}")
+            ctx.append("")
+
+    ctx.append(f"[USER QUESTION] {message}")
+    if prediction_context and (prediction_context.get("currency_code") or "churn_probability" in prediction_context):
+        ctx.append("\nPlease answer based on the context above. Be specific and actionable. Ensure all monetary figures are converted to the selected currency.")
+        
+    return "\n".join(ctx) if ctx else message
 
 
 def _fallback_response(message: str, prediction_context: Optional[Dict[str, Any]] = None) -> str:
-    """Return a rule-based response when AI provider is unavailable."""
+    """Return a rule-based response when AI provider is unavailable, respecting currency options."""
+    curr_symbol = "$"
+    curr_rate = 1.0
+    
     if prediction_context:
+        curr_symbol = prediction_context.get("currency_symbol", "$")
+        try:
+            curr_rate = float(prediction_context.get("currency_rate", 1.0))
+        except (ValueError, TypeError):
+            curr_rate = 1.0
+
+    if prediction_context and ("churn_probability" in prediction_context or "risk_level" in prediction_context):
         prob = prediction_context.get("churn_probability", 0.5)
         risk = prediction_context.get("risk_level", "Medium")
         contract = prediction_context.get("contract", "Month-to-month")
         tenure = prediction_context.get("tenure", 12)
         payment = prediction_context.get("payment_method", "Electronic check")
         internet = prediction_context.get("internet_service", "DSL")
-        charges = prediction_context.get("monthly_charges", 70.0)
+        
+        try:
+            charges = float(prediction_context.get("monthly_charges", 70.0)) * curr_rate
+        except (ValueError, TypeError):
+            charges = 70.0 * curr_rate
 
         recs = []
         if contract == "Month-to-month":
             recs.append("• **Contract Migration**: Offer a Value Lock-In promotion to switch to a 1-year or 2-year contract — typically drops churn probability from ~42% to under 3%.")
         if payment == "Electronic check":
-            recs.append("• **Auto-Pay Incentive**: Offer a $10 bill credit for enrolling in automatic bank transfer — eliminates billing friction.")
+            credit_amount = 10.0 * curr_rate
+            if curr_symbol == "$":
+                credit_str = "$10"
+            elif curr_symbol == "₹":
+                credit_str = f"₹{int(credit_amount)}"
+            else:
+                credit_str = f"{curr_symbol}{credit_amount:.2f}"
+            recs.append(f"• **Auto-Pay Incentive**: Offer a {credit_str} bill credit for enrolling in automatic bank transfer — eliminates billing friction.")
         if internet == "Fiber optic":
             recs.append("• **Fiber Value-Add**: Include 6 months of a premium streaming service to offset perceived high cost.")
-        elif charges > 75.0:
+        elif charges > (75.0 * curr_rate):
             recs.append("• **Plan Right-Sizing**: Review usage and recommend a bundle that reduces monthly charges without losing key services.")
         if tenure <= 12:
             recs.append("• **First-Year Engagement**: Enroll in priority check-in cycle to ensure early satisfaction.")
@@ -86,7 +129,7 @@ def _fallback_response(message: str, prediction_context: Optional[Dict[str, Any]
         return f"""### 🎯 Churn Risk Analysis: {prob * 100:.1f}% ({risk} Risk)
 
 **Customer Profile:**
-- Contract: `{contract}` | Tenure: `{tenure} months` | Monthly: `${charges:.2f}`
+- Contract: `{contract}` | Tenure: `{tenure} months` | Monthly: `{curr_symbol}{charges:.2f}`
 - Internet: `{internet}` | Payment: `{payment}`
 
 **💡 Recommended Retention Actions:**
@@ -97,10 +140,11 @@ def _fallback_response(message: str, prediction_context: Optional[Dict[str, Any]
 
     msg_lower = message.lower()
     if any(w in msg_lower for w in ["churn", "risk", "factor", "why", "cause"]):
-        return """**Customer churn** occurs when customers stop using your services. Key drivers in Telecom:
+        charges_threshold = 70.0 * curr_rate
+        return f"""**Customer churn** occurs when customers stop using your services. Key drivers in Telecom:
 
 • **Month-to-month contracts** → ~42% churn rate vs ~3% for 2-year contracts
-• **High monthly charges** (>$70) → correlated with higher churn
+• **High monthly charges** (>{curr_symbol}{charges_threshold:.2f}) → correlated with higher churn
 • **Fiber optic internet** → price sensitivity in competitive markets
 • **Electronic check payments** → highest churn rate among payment methods
 • **Low tenure** (0-12 months) → highest churn risk period
@@ -129,13 +173,13 @@ Our 7 ML models analyze 19 features to predict individual churn probability."""
 **Training:** SMOTE oversampling to handle class imbalance (26.5% churn rate)"""
 
     elif any(w in msg_lower for w in ["clv", "lifetime value", "revenue", "value"]):
-        return """**Customer Lifetime Value (CLV) in Analytica:**
+        return f"""**Customer Lifetime Value (CLV) in Analytica:**
 
 • **Base CLV** = Monthly Charges × Remaining Months
 • **Risk-Adjusted CLV** = Base CLV × (1 - Churn Probability)
 • **Revenue at Risk** = Monthly Charges × 12 × Churn Probability
 
-**CLV Tiers:** Platinum (>$2K) · Gold ($1K-2K) · Silver ($400-1K) · Bronze (<$400)
+**CLV Tiers:** Platinum ({curr_symbol}{2000 * curr_rate:.0f}) · Gold ({curr_symbol}{1000 * curr_rate:.0f}-{2000 * curr_rate:.0f}) · Silver ({curr_symbol}{400 * curr_rate:.0f}-{1000 * curr_rate:.0f}) · Bronze (<{curr_symbol}{400 * curr_rate:.0f})
 
 Focus retention efforts on **high CLV + high churn probability** customers first — maximum ROI."""
 
@@ -188,13 +232,19 @@ async def get_chat_response(
                 "model_used": provider.model_name,
             }
         except RuntimeError as e:
+            print(f"AI provider error: {e}")
             if "rate limit" in str(e).lower():
                 return {
                     "response": f"⚠️ {str(e)} Here's a rule-based response:\n\n{_fallback_response(message, prediction_context)}",
                     "suggestions": suggestions,
                     "model_used": "fallback",
                 }
-            print(f"AI provider error: {e}")
+            else:
+                return {
+                    "response": f"⚠️ **AI Chatbot Provider Error**: {str(e)}\n\n{_fallback_response(message, prediction_context)}",
+                    "suggestions": suggestions,
+                    "model_used": "fallback",
+                }
 
     # Fallback
     return {

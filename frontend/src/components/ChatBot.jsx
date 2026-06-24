@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { chatAPI } from '../services/api';
 import { HiOutlineChatAlt2, HiOutlineX, HiOutlinePaperAirplane, HiOutlineTrash } from 'react-icons/hi';
+import { useCurrency } from '../context/CurrencyContext';
 
 /** Safely renders markdown-like text without dangerouslySetInnerHTML */
 function SafeMessage({ text }) {
@@ -50,6 +51,7 @@ function parseBold(text) {
 }
 
 export default function ChatBot({ predictionContext = null }) {
+  const { currency, currentCurrency } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -102,7 +104,12 @@ export default function ChatBot({ predictionContext = null }) {
       const response = await chatAPI.sendMessage(
         text,
         predictionContext?.prediction_id || null,
-        predictionContext || null
+        {
+          ...(predictionContext || {}),
+          currency_code: currency,
+          currency_symbol: currentCurrency?.symbol || '$',
+          currency_rate: currentCurrency?.rate || 1.0,
+        }
       );
       const botMessage = { type: 'bot', text: response.data.response };
       setMessages((prev) => [...prev, botMessage]);
