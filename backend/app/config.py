@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # AI Provider — gemini | openai | ollama
     AI_PROVIDER: str = "gemini"
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"       # single source of truth
+    GEMINI_MODEL: str = "gemini-2.5-flash"       # single source of truth
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
