@@ -1,11 +1,12 @@
 """Executive Insights Dashboard API routes."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User, Prediction
 from app.services.clv_service import compute_clv_summary
 from app.utils.security import get_current_user
+from typing import Optional
 import asyncio
 
 router = APIRouter(prefix="/api/executive", tags=["Executive Insights"])
@@ -62,6 +63,7 @@ def _generate_rule_insights(stats: dict) -> list[dict]:
 
 @router.get("/summary")
 def get_executive_summary(
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -69,7 +71,10 @@ def get_executive_summary(
     Executive KPI summary:
     total predictions, churn rate, revenue at risk, CLV metrics, segment performance.
     """
-    predictions = db.query(Prediction).filter(Prediction.user_id == current_user.id).all()
+    query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
+    predictions = query.all()
     if not predictions:
         return {
             "total_predictions": 0, "churn_rate": 0.0, "total_revenue_at_risk": 0.0,
@@ -136,11 +141,15 @@ def get_executive_summary(
 
 @router.get("/insights")
 def get_rule_based_insights(
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get rule-based business insights — fast, no AI API call."""
-    predictions = db.query(Prediction).filter(Prediction.user_id == current_user.id).all()
+    query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
+    predictions = query.all()
     if not predictions:
         return {"insights": [{"type": "info", "icon": "📊", "title": "No Data Yet", "text": "Make some predictions to see executive insights."}]}
 
@@ -162,6 +171,7 @@ def get_rule_based_insights(
 
 @router.post("/ai-insights")
 async def get_ai_insights(
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -171,7 +181,10 @@ async def get_ai_insights(
     """
     from app.services.ai_provider import get_ai_provider
 
-    predictions = db.query(Prediction).filter(Prediction.user_id == current_user.id).all()
+    query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
+    predictions = query.all()
     if not predictions:
         raise HTTPException(status_code=400, detail="No prediction data available for AI analysis")
 
@@ -180,7 +193,7 @@ async def get_ai_insights(
     high_risk = sum(1 for p in predictions if p.risk_level == "High")
     clv_data = compute_clv_summary(predictions)
 
-    prompt = f"""You are an executive business analyst reviewing a customer churn portfolio.
+    prompt = f"""You are an executive business analyst reviewing a customer churn portfolio for the {industry.upper() if industry else "overall multi-industry"} vertical.
 
 Portfolio Summary:
 - Total Customers Analyzed: {total}

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { executiveAPI } from '../services/api';
+import { TrendingUp, BarChart3, Landmark, ShoppingBag, HeartPulse, Sparkles, ClipboardList, Target, AlertTriangle, Gem } from 'lucide-react';
+import { useCurrency } from '../context/CurrencyContext';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Cell,
@@ -17,14 +19,20 @@ const INSIGHT_STYLES = {
 
 function KPICard({ label, value, sub, color, icon }) {
   return (
-    <div className="glass-card" style={{ padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color }}>{value}</div>
-          <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600, marginTop: 2 }}>{label}</div>
+    <div className="glass-card animate-fade-in-up" style={{ padding: '20px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12,
+          background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.3rem', flexShrink: 0
+        }}>
+          {icon}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>{label}</div>
+          <div style={{ color, fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.2 }}>{value}</div>
           {sub && <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: 2 }}>{sub}</div>}
         </div>
-        <div style={{ fontSize: '1.8rem', opacity: 0.7 }}>{icon}</div>
       </div>
     </div>
   );
@@ -44,29 +52,34 @@ function InsightCard({ insight }) {
 }
 
 export default function Executive() {
+  const { format } = useCurrency();
   const [summary, setSummary] = useState(null);
   const [insights, setInsights] = useState([]);
   const [aiInsights, setAIInsights] = useState(null);
+  const [selectedIndustry, setSelectedIndustry] = useState('telecom');
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAILoading] = useState(false);
   const [aiError, setAIError] = useState('');
 
   useEffect(() => {
+    setLoading(true);
+    setAIInsights(null);
+    setAIError('');
     Promise.all([
-      executiveAPI.getSummary().catch(() => ({ data: null })),
-      executiveAPI.getInsights().catch(() => ({ data: { insights: [] } })),
+      executiveAPI.getSummary(selectedIndustry).catch(() => ({ data: null })),
+      executiveAPI.getInsights(selectedIndustry).catch(() => ({ data: { insights: [] } })),
     ]).then(([sumR, insR]) => {
       setSummary(sumR.data);
       setInsights(insR.data?.insights || []);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [selectedIndustry]);
 
   const handleAIInsights = async () => {
     setAILoading(true);
     setAIError('');
     setAIInsights(null);
     try {
-      const r = await executiveAPI.getAIInsights();
+      const r = await executiveAPI.getAIInsights(selectedIndustry);
       setAIInsights(r.data);
     } catch (e) {
       setAIError(e.response?.data?.detail || 'AI insights unavailable');
@@ -77,6 +90,26 @@ export default function Executive() {
 
   if (loading) return (
     <div className="page-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1>📊 Executive Insights Dashboard</h1>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>Portfolio-level KPIs and strategic business intelligence</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Active Industry:</span>
+          <select
+            className="form-select"
+            value={selectedIndustry}
+            onChange={e => setSelectedIndustry(e.target.value)}
+            style={{ minWidth: 160, background: 'rgba(255,255,255,0.03)' }}
+          >
+            <option value="telecom">📡 Telecom</option>
+            <option value="banking">🏦 Banking</option>
+            <option value="ecommerce">🛍️ E-commerce</option>
+            <option value="healthcare">🩺 Healthcare</option>
+          </select>
+        </div>
+      </div>
       <div className="loading-container"><div className="spinner" /><p className="loading-text">Loading executive dashboard...</p></div>
     </div>
   );
@@ -88,9 +121,25 @@ export default function Executive() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1>📊 Executive Insights Dashboard</h1>
-        <p>Portfolio-level KPIs and strategic business intelligence</p>
+      <div className="page-header animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1>📊 Executive Insights Dashboard</h1>
+          <p>Portfolio-level KPIs and strategic business intelligence</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Active Industry:</span>
+          <select
+            className="form-select"
+            value={selectedIndustry}
+            onChange={e => setSelectedIndustry(e.target.value)}
+            style={{ minWidth: 160, background: 'rgba(255,255,255,0.03)' }}
+          >
+            <option value="telecom">📡 Telecom</option>
+            <option value="banking">🏦 Banking</option>
+            <option value="ecommerce">🛍️ E-commerce</option>
+            <option value="healthcare">🩺 Healthcare</option>
+          </select>
+        </div>
       </div>
 
       {!summary || s.total_predictions === 0 ? (
@@ -102,17 +151,17 @@ export default function Executive() {
       ) : (
         <>
           {/* KPI Grid */}
-          <div className="animate-fade-in-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+          <div className="stats-grid animate-fade-in-up" style={{ marginBottom: 24 }}>
             <KPICard label="Total Analyzed" value={s.total_predictions} icon="📋" color={C.violet} />
             <KPICard label="Churn Rate" value={`${s.churn_rate}%`} icon="📉" color={s.churn_rate > 30 ? C.rose : s.churn_rate > 15 ? C.amber : C.emerald} sub="of total predictions" />
-            <KPICard label="Revenue at Risk" value={`$${(s.total_revenue_at_risk || 0).toLocaleString()}`} icon="💸" color={C.rose} sub="annual estimate" />
-            <KPICard label="Avg Risk-Adj CLV" value={`$${(s.avg_risk_adjusted_clv || 0).toFixed(0)}`} icon="💎" color={C.violet} sub="per customer" />
+            <KPICard label="Revenue at Risk" value={format(s.total_revenue_at_risk || 0, 0)} icon="💸" color={C.rose} sub="annual estimate" />
+            <KPICard label="Avg Risk-Adj CLV" value={format(s.avg_risk_adjusted_clv || 0, 0)} icon="💎" color={C.violet} sub="per customer" />
             <KPICard label="High-Value at Risk" value={s.high_value_count || 0} icon="⚠️" color={C.amber} sub="top 20% CLV churning" />
             <KPICard label="High Risk" value={s.high_risk_count || 0} icon="🔴" color={C.rose} sub={`of ${s.total_predictions}`} />
           </div>
 
           {/* Two-column: Trend + Segments */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+          <div className="analytics-grid" style={{ marginBottom: 24 }}>
             {/* Trend line */}
             <div className="glass-card animate-fade-in-up">
               <h3 style={{ color: '#e2e8f0', marginBottom: 4 }}>Monthly Churn Trend</h3>
@@ -157,7 +206,7 @@ export default function Executive() {
                           <td style={{ padding: '6px 10px', color: seg.churn_rate > 40 ? C.rose : seg.churn_rate > 20 ? C.amber : C.emerald, fontWeight: 700 }}>
                             {seg.churn_rate}%
                           </td>
-                          <td style={{ padding: '6px 10px', color: C.rose }}>${(seg.total_revenue_at_risk || 0).toLocaleString()}</td>
+                          <td style={{ padding: '6px 10px', color: C.rose }}>{format(seg.total_revenue_at_risk || 0, 0)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -185,11 +234,11 @@ export default function Executive() {
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                         <td style={{ padding: '8px 12px', color: '#f59e0b', fontWeight: 700 }}>#{i + 1}</td>
                         <td style={{ padding: '8px 12px', color: '#e2e8f0' }}>#{c.prediction_id}</td>
-                        <td style={{ padding: '8px 12px', color: '#e2e8f0' }}>${c.monthly_charges?.toFixed(2)}</td>
+                        <td style={{ padding: '8px 12px', color: '#e2e8f0' }}>{format(c.monthly_charges || 0)}</td>
                         <td style={{ padding: '8px 12px', color: '#94a3b8' }}>{c.tenure} mo</td>
                         <td style={{ padding: '8px 12px', color: C.rose, fontWeight: 700 }}>{((c.churn_probability || 0) * 100).toFixed(1)}%</td>
                         <td style={{ padding: '8px 12px', color: c.tier_color || '#8b5cf6', fontWeight: 600 }}>{c.tier}</td>
-                        <td style={{ padding: '8px 12px', color: C.rose }}>${c.revenue_at_risk?.toFixed(0)}</td>
+                        <td style={{ padding: '8px 12px', color: C.rose }}>{format(c.revenue_at_risk || 0, 0)}</td>
                       </tr>
                     ))}
                   </tbody>

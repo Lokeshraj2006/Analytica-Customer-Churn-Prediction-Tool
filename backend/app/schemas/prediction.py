@@ -56,16 +56,17 @@ class PredictionResponse(BaseModel):
 class PredictionHistory(BaseModel):
     """Schema for prediction history item."""
     id: int
-    gender: str
-    tenure: int
-    contract: str
-    monthly_charges: float
-    total_charges: float
-    churn_prediction: int
-    churn_probability: float
-    risk_level: str
-    model_used: str
-    created_at: datetime
+    gender: Optional[str] = None
+    tenure: Optional[int] = None
+    contract: Optional[str] = None
+    monthly_charges: Optional[float] = None
+    total_charges: Optional[float] = None
+    churn_prediction: Optional[int] = None
+    churn_probability: Optional[float] = None
+    risk_level: Optional[str] = None
+    model_used: Optional[str] = None
+    industry: Optional[str] = "telecom"
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -74,31 +75,32 @@ class PredictionHistory(BaseModel):
 class PredictionDetail(BaseModel):
     """Schema for detailed single prediction view."""
     id: int
-    gender: str
-    senior_citizen: int
-    partner: str
-    dependents: str
-    tenure: int
-    phone_service: str
-    multiple_lines: str
-    internet_service: str
-    online_security: str
-    online_backup: str
-    device_protection: str
-    tech_support: str
-    streaming_tv: str
-    streaming_movies: str
-    contract: str
-    paperless_billing: str
-    payment_method: str
-    monthly_charges: float
-    total_charges: float
-    churn_prediction: int
-    churn_probability: float
-    risk_level: str
-    model_used: str
+    gender: Optional[str] = None
+    senior_citizen: Optional[int] = None
+    partner: Optional[str] = None
+    dependents: Optional[str] = None
+    tenure: Optional[int] = None
+    phone_service: Optional[str] = None
+    multiple_lines: Optional[str] = None
+    internet_service: Optional[str] = None
+    online_security: Optional[str] = None
+    online_backup: Optional[str] = None
+    device_protection: Optional[str] = None
+    tech_support: Optional[str] = None
+    streaming_tv: Optional[str] = None
+    streaming_movies: Optional[str] = None
+    contract: Optional[str] = None
+    paperless_billing: Optional[str] = None
+    payment_method: Optional[str] = None
+    monthly_charges: Optional[float] = None
+    total_charges: Optional[float] = None
+    churn_prediction: Optional[int] = None
+    churn_probability: Optional[float] = None
+    risk_level: Optional[str] = None
+    model_used: Optional[str] = None
     confidence: Optional[float] = 1.0
-    created_at: datetime
+    industry: Optional[str] = "telecom"
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -130,6 +132,7 @@ class ChatMessage(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     prediction_id: Optional[int] = None
     context: Optional[Dict[str, Any]] = None
+    page_context: Optional[Dict[str, Any]] = None
 
 
 class ChatResponse(BaseModel):

@@ -25,6 +25,8 @@ export default function Navbar({ collapsed }) {
     '/executive': 'Executive Insights',
     '/data-quality': 'Data Quality',
     '/tuning': 'Hyperparameter Tuning',
+    '/clv': 'Customer Lifetime Value',
+    '/multi-industry': 'Multi-Industry Analytics',
   };
   const pageTitle = titles[location.pathname]
     || (location.pathname.startsWith('/explainability') ? 'SHAP Explainability' : 'Dashboard');

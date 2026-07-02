@@ -68,7 +68,7 @@ class Prediction(Base):
     input_features_json = Column(Text, nullable=True)   # full input snapshot
     top_features_json = Column(Text, nullable=True)     # global feature importance
 
-    # ── V4.0 extended fields ───────────────────────────────────────────────
+    # ── V1.0 extended fields ───────────────────────────────────────────────
     shap_values_json = Column(Text, nullable=True)      # per-prediction SHAP values
     clv_score = Column(Float, nullable=True)            # Customer Lifetime Value
     risk_adjusted_clv = Column(Float, nullable=True)    # CLV × (1 - churn_prob)

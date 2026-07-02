@@ -17,38 +17,44 @@ def compare_scenarios(
     base_features: dict,
     modifications: dict,
     model_type: str = "random_forest",
+    industry: str = "telecom",
 ) -> dict:
     """
     Run prediction for base and modified feature set, return delta analysis.
-
-    Args:
-        base_features:   Original customer features (snake_case API keys)
-        modifications:   Dict of feature → new value to override
-        model_type:      ML model key to use
-
-    Returns:
-        {
-            original: {...},    # original prediction + CLV
-            modified: {...},    # modified prediction + CLV
-            delta: {...},       # probability delta, risk change, CLV impact
-            modifications: [...] # list of what changed
-        }
     """
     modified_features = _merge_features(base_features, modifications)
+    industry = industry.lower()
 
     # Run both predictions
-    orig_result = predict_churn(base_features, model_type)
-    mod_result = predict_churn(modified_features, model_type)
+    if industry == "telecom":
+        orig_result = predict_churn(base_features, model_type)
+        mod_result = predict_churn(modified_features, model_type)
+    else:
+        from app.services.industry_service import predict_industry_churn
+        orig_result = predict_industry_churn(base_features, industry, model_type)
+        mod_result = predict_industry_churn(modified_features, industry, model_type)
 
     # CLV for both scenarios
+    monthly_key = "monthly_charges" if "monthly_charges" in base_features else "avg_order_value" if "avg_order_value" in base_features else "balance"
+    tenure_key = "tenure" if "tenure" in base_features else "tenure_months" if "tenure_months" in base_features else "age"
+
+    orig_monthly = float(base_features.get(monthly_key, 0))
+    mod_monthly = float(modified_features.get(monthly_key, 0))
+    if monthly_key == "balance":
+        orig_monthly = orig_monthly / 1000.0  # scale down balance for CLV estimation
+        mod_monthly = mod_monthly / 1000.0
+
+    orig_tenure = int(base_features.get(tenure_key, 0))
+    mod_tenure = int(modified_features.get(tenure_key, 0))
+
     orig_clv = compute_clv(
-        monthly_charges=base_features.get("monthly_charges", 0),
-        tenure=base_features.get("tenure", 0),
+        monthly_charges=orig_monthly,
+        tenure=orig_tenure,
         churn_probability=orig_result["churn_probability"],
     )
     mod_clv = compute_clv(
-        monthly_charges=modified_features.get("monthly_charges", 0),
-        tenure=modified_features.get("tenure", 0),
+        monthly_charges=mod_monthly,
+        tenure=mod_tenure,
         churn_probability=mod_result["churn_probability"],
     )
 
@@ -97,35 +103,106 @@ def batch_scenarios(
     base_features: dict,
     scenarios: list[dict],
     model_type: str = "random_forest",
+    industry: str = "telecom",
 ) -> list[dict]:
     """
     Run multiple what-if scenarios against the same base customer.
-
-    Args:
-        base_features: Original customer features
-        scenarios: list of { name: str, modifications: dict }
-        model_type: ML model key
-
-    Returns:
-        list of { name, ...compare_scenarios() result }
     """
     results = []
     for scenario in scenarios:
         name = scenario.get("name", "Unnamed")
         mods = scenario.get("modifications", {})
         try:
-            result = compare_scenarios(base_features, mods, model_type)
+            result = compare_scenarios(base_features, mods, model_type, industry)
             results.append({"scenario_name": name, **result})
         except Exception as e:
             results.append({"scenario_name": name, "error": str(e)})
     return results
 
 
-def get_preset_scenarios(base_features: dict) -> list[dict]:
+def get_preset_scenarios(base_features: dict, industry: str = "telecom") -> list[dict]:
     """
-    Generate common retention intervention scenarios automatically.
-    Used by the frontend to auto-populate the simulator with smart defaults.
+    Generate common retention intervention scenarios automatically by industry.
     """
+    industry = industry.lower()
+    
+    if industry == "banking":
+        return [
+            {
+                "name": "Activate Member",
+                "modifications": {"is_active_member": 1},
+                "description": "Increase engagement and member activity",
+                "icon": "⚡",
+            },
+            {
+                "name": "Cross-sell Product",
+                "modifications": {"num_products": min(4, int(base_features.get("num_products", 1)) + 1)},
+                "description": "Cross-sell an additional financial product",
+                "icon": "💎",
+            },
+            {
+                "name": "Acquire Credit Card",
+                "modifications": {"has_credit_card": 1},
+                "description": "Cross-sell standard credit card product",
+                "icon": "💳",
+            },
+            {
+                "name": "Increase Balance (+30%)",
+                "modifications": {"balance": round(float(base_features.get("balance", 50000)) * 1.3, 2)},
+                "description": "Incentivize balance growth via promotion",
+                "icon": "📈",
+            },
+        ]
+    elif industry == "ecommerce":
+        return [
+            {
+                "name": "Remarketing Campaign",
+                "modifications": {"days_since_last_purchase": max(1, int(base_features.get("days_since_last_purchase", 30) - 20))},
+                "description": "Run coupon/remarketing campaign",
+                "icon": "🛍️",
+            },
+            {
+                "name": "Checkout Optimization",
+                "modifications": {"cart_abandonment_rate": max(5.0, float(base_features.get("cart_abandonment_rate", 50.0)) * 0.5)},
+                "description": "Implement checkout optimization to reduce abandonment",
+                "icon": "🛒",
+            },
+            {
+                "name": "Resolve Support Tickets",
+                "modifications": {"support_tickets": 0},
+                "description": "Resolve all outstanding support tickets",
+                "icon": "🛠️",
+            },
+            {
+                "name": "Upgrade Loyalty Tier",
+                "modifications": {"loyalty_tier": "Gold" if base_features.get("loyalty_tier") != "Gold" else "Platinum"},
+                "description": "Promote customer to the next loyalty status level",
+                "icon": "👑",
+            },
+        ]
+    elif industry == "healthcare":
+        return [
+            {
+                "name": "Wellness Follow-Up",
+                "modifications": {"days_since_last_visit": min(30, int(base_features.get("days_since_last_visit", 90)))},
+                "description": "Schedule a routine wellness check-in visit",
+                "icon": "🩺",
+            },
+            {
+                "name": "SMS Appointment Reminders",
+                "modifications": {"appointment_no_shows": 0},
+                "description": "Set up automated reminders to eliminate no-shows",
+                "icon": "📱",
+            },
+            {
+                "name": "Improve Patient Satisfaction",
+                "modifications": {"patient_satisfaction": max(8, int(base_features.get("patient_satisfaction", 5)) + 2)},
+                "description": "Address complaints to improve experience rating",
+                "icon": "⭐",
+            },
+        ]
+        
+    # Default (telecom)
     return [
         {
             "name": "Upgrade to Annual Contract",

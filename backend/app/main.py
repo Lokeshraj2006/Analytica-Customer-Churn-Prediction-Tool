@@ -1,4 +1,4 @@
-"""FastAPI application entry point — Analytica V4.0."""
+"""FastAPI application entry point — Analytica V1.0."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -11,7 +11,7 @@ from app.services.chatbot_service import initialize_chatbot
 # ── Existing routers ──────────────────────────────────────────────────────────
 from app.routers import auth, predictions, customers, chatbot, admin, eda
 
-# ── V4.0 new routers ──────────────────────────────────────────────────────────
+# ── V1.0 new routers ──────────────────────────────────────────────────────────
 from app.routers import shap_router, clv_router, simulator, segments, executive, tuning
 
 # ── V5.0 Multi-Industry ────────────────────────────────────────────────────────
@@ -22,22 +22,22 @@ from app.routers import industry
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     print("=" * 55)
-    print("  Starting Analytica V4.0 API")
+    print("  Starting Analytica V1.0 API")
     print("=" * 55)
     init_db()
     print("[OK] Database initialized")
     load_models()
     initialize_chatbot()
-    print("[OK] Analytica V4.0 API ready!")
+    print("[OK] Analytica V1.0 API ready!")
     print("=" * 55)
     yield
-    print("[STOP] Shutting down Analytica V4.0 API...")
+    print("[STOP] Shutting down Analytica V1.0 API...")
 
 
 app = FastAPI(
-    title="Analytica V4.0 API",
+    title="Analytica V1.0 API",
     description="AI-Powered Multi-Industry Predictive Analytics Platform",
-    version="4.0.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -62,7 +62,7 @@ app.include_router(chatbot.router)
 app.include_router(admin.router)
 app.include_router(eda.router)
 
-# ── V4.0 new routers ──────────────────────────────────────────────────────────
+# ── V1.0 new routers ──────────────────────────────────────────────────────────
 app.include_router(shap_router.router)
 app.include_router(clv_router.router)
 app.include_router(simulator.router)
@@ -77,7 +77,7 @@ def root():
     """API health check."""
     return {
         "name": "Analytica API",
-        "version": "4.0.0",
+        "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
         "features": [
@@ -96,4 +96,4 @@ def root():
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "version": "4.0.0"}
+    return {"status": "healthy", "version": "1.0.0"}

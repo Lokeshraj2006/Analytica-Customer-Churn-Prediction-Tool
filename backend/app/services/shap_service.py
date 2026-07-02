@@ -109,17 +109,26 @@ def compute_shap_values(
     try:
         shap_vals = explainer.shap_values(X_instance)
 
-        # For binary classifiers returning list[array], pick class=1 (churn)
+        # For binary classifiers, pick the array corresponding to class=1 (churn)
         if isinstance(shap_vals, list):
             sv = shap_vals[1][0] if len(shap_vals) > 1 else shap_vals[0][0]
+        elif isinstance(shap_vals, np.ndarray):
+            if shap_vals.ndim == 3:
+                # Shape: (n_samples, n_features, n_classes)
+                sv = shap_vals[0, :, 1] if shap_vals.shape[2] > 1 else shap_vals[0, :, 0]
+            elif shap_vals.ndim == 2:
+                # Shape: (n_samples, n_features)
+                sv = shap_vals[0]
+            else:
+                sv = shap_vals
         else:
-            # TreeExplainer may return (n_samples, n_features) for single class
-            sv = shap_vals[0] if shap_vals.ndim == 2 else shap_vals
+            sv = shap_vals
 
-        # Base value
-        base_value = float(explainer.expected_value)
+        # Base value for expected output
         if isinstance(explainer.expected_value, (list, np.ndarray)):
             base_value = float(explainer.expected_value[1] if len(explainer.expected_value) > 1 else explainer.expected_value[0])
+        else:
+            base_value = float(explainer.expected_value)
 
         # Build per-feature breakdown
         feature_contributions = []

@@ -8,19 +8,19 @@ import {
   XAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  HiOutlineTrendingUp,
-  HiOutlineTrendingDown,
-  HiOutlineCurrencyDollar,
-  HiOutlineShieldCheck,
-  HiOutlineLightningBolt,
-  HiOutlineUsers,
-  HiOutlineLightBulb,
-  HiOutlineDocumentReport,
-  HiOutlineClock,
-  HiOutlineCreditCard,
-  HiOutlineCheckCircle,
-  HiOutlineExclamationCircle,
-} from 'react-icons/hi';
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  ShieldCheck,
+  Zap,
+  Users,
+  Lightbulb,
+  FileText,
+  Clock,
+  CreditCard,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
 import '../styles/dashboard.css';
 
 /* ── Colour palette ────────────────────────────────────────── */
@@ -208,10 +208,10 @@ export default function Dashboard() {
 
   // Insights (using react-icon elements, not emojis)
   const insights = [
-    { Icon: HiOutlineDocumentReport, text: 'Month-to-month contracts drive highest churn risk.', color: C.violet },
-    { Icon: HiOutlineClock,          text: 'Peak prediction activity: Thu – Fri evenings.',      color: C.amber  },
-    { Icon: HiOutlineCreditCard,     text: 'Electronic Check users churn at highest rate (42%).', color: C.cyan  },
-    { Icon: HiOutlineCheckCircle,    text: `${retainPct}% of analysed customers are retained.`,  color: C.emerald},
+    { Icon: FileText,    text: 'Month-to-month contracts drive highest churn risk.', color: C.violet },
+    { Icon: Clock,       text: 'Peak prediction activity: Thu – Fri evenings.',      color: C.amber  },
+    { Icon: CreditCard,  text: 'Electronic Check users churn at highest rate (42%).', color: C.cyan  },
+    { Icon: CheckCircle, text: `${retainPct}% of analysed customers are retained.`,  color: C.emerald},
   ];
 
   /* ── Loading ──────────────────────────────────────────────── */
@@ -237,17 +237,17 @@ export default function Dashboard() {
         <div className="db2-header-actions">
           {isViewer && (
             <span className="db2-viewer-badge">
-              <HiOutlineExclamationCircle /> Viewer — Read-only
+              <AlertCircle size={16} /> Viewer — Read-only
             </span>
           )}
           {canPredict && (
             <button className="btn btn-primary btn-sm" onClick={() => navigate('/predict')}>
-              <HiOutlineLightningBolt /> New Prediction
+              <Zap size={16} /> New Prediction
             </button>
           )}
           {isAdmin && (
             <button className="btn btn-secondary btn-sm" onClick={() => navigate('/admin')}>
-              <HiOutlineShieldCheck /> Admin Panel
+              <ShieldCheck size={16} /> Admin Panel
             </button>
           )}
         </div>
@@ -259,12 +259,12 @@ export default function Dashboard() {
         <div className="db2-kpi-card">
           <div className="db2-kpi-top">
             <div className="db2-kpi-icon" style={{ background: 'rgba(139,92,246,0.15)', color: C.violet }}>
-              <HiOutlineLightningBolt />
+              <Zap size={20} />
             </div>
             <div className="db2-kpi-body">
               <span className="db2-kpi-label">Total Predictions</span>
               <div className="db2-kpi-value"><Counter value={s.total_predictions} /></div>
-              <div className="db2-kpi-change pos"><HiOutlineTrendingUp /> All time</div>
+              <div className="db2-kpi-change pos"><TrendingUp size={14} /> All time</div>
             </div>
           </div>
           <div className="db2-kpi-spark"><Spark data={sparkPreds} color={C.violet} /></div>
@@ -273,12 +273,12 @@ export default function Dashboard() {
         <div className="db2-kpi-card">
           <div className="db2-kpi-top">
             <div className="db2-kpi-icon" style={{ background: 'rgba(244,63,94,0.15)', color: C.rose }}>
-              <HiOutlineTrendingDown />
+              <TrendingDown size={20} />
             </div>
             <div className="db2-kpi-body">
               <span className="db2-kpi-label">Churn Rate</span>
               <div className="db2-kpi-value"><Counter value={s.churn_rate} suffix="%" /></div>
-              <div className="db2-kpi-change neg"><HiOutlineTrendingDown /> Predicted churn</div>
+              <div className="db2-kpi-change neg"><TrendingDown size={14} /> Predicted churn</div>
             </div>
           </div>
           <div className="db2-kpi-spark"><Spark data={sparkChurn} color={C.rose} /></div>
@@ -287,7 +287,7 @@ export default function Dashboard() {
         <div className="db2-kpi-card">
           <div className="db2-kpi-top">
             <div className="db2-kpi-icon" style={{ background: 'rgba(245,158,11,0.15)', color: C.amber }}>
-              <HiOutlineCurrencyDollar />
+              <DollarSign size={20} />
             </div>
             <div className="db2-kpi-body">
               <span className="db2-kpi-label">Revenue at Risk</span>
@@ -303,12 +303,12 @@ export default function Dashboard() {
         <div className="db2-kpi-card">
           <div className="db2-kpi-top">
             <div className="db2-kpi-icon" style={{ background: 'rgba(16,185,129,0.15)', color: C.emerald }}>
-              <HiOutlineShieldCheck />
+              <ShieldCheck size={20} />
             </div>
             <div className="db2-kpi-body">
               <span className="db2-kpi-label">Model Accuracy</span>
               <div className="db2-kpi-value"><Counter value={s.model_accuracy || 85.2} suffix="%" /></div>
-              <div className="db2-kpi-change pos"><HiOutlineTrendingUp /> Random Forest</div>
+              <div className="db2-kpi-change pos"><TrendingUp size={14} /> Random Forest</div>
             </div>
           </div>
           <div className="db2-kpi-spark"><Spark data={sparkAcc} color={C.emerald} /></div>
@@ -317,7 +317,7 @@ export default function Dashboard() {
         <div className="db2-kpi-card">
           <div className="db2-kpi-top">
             <div className="db2-kpi-icon" style={{ background: 'rgba(244,63,94,0.12)', color: C.rose }}>
-              <HiOutlineUsers />
+              <Users size={20} />
             </div>
             <div className="db2-kpi-body">
               <span className="db2-kpi-label">High Risk</span>
@@ -542,14 +542,14 @@ export default function Dashboard() {
           <div className="db2-retain-row">
             <div className="db2-retain-half">
               <div className="db2-retain-icon" style={{ color: C.emerald, background: 'rgba(16,185,129,0.12)' }}>
-                <HiOutlineUsers />
+                <Users size={20} />
               </div>
               <span className="db2-retain-label">Retained</span>
               <span className="db2-retain-pct" style={{ color: C.emerald }}>{retainPct}%</span>
             </div>
             <div className="db2-retain-half">
               <div className="db2-retain-icon" style={{ color: C.rose, background: 'rgba(244,63,94,0.12)' }}>
-                <HiOutlineTrendingDown />
+                <TrendingDown size={20} />
               </div>
               <span className="db2-retain-label">Churned</span>
               <span className="db2-retain-pct" style={{ color: C.rose }}>{churnPct.toFixed(1)}%</span>
@@ -578,7 +578,7 @@ export default function Dashboard() {
       {/* ── Insights Bar ────────────────────────────────────── */}
       <div className="db2-insights animate-fade-in">
         <div className="db2-insights-label">
-          <HiOutlineLightBulb />
+          <Lightbulb size={18} />
           <span>Insights</span>
         </div>
         {insights.map(({ Icon, text, color }, i) => (

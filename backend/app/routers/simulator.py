@@ -33,7 +33,7 @@ def _resolve_features(
     model_type: str,
     db: Session,
     current_user: User,
-) -> tuple[dict, str]:
+) -> tuple[dict, str, str]:
     """Resolve base features from either a prediction ID or a direct features dict."""
     if base_prediction_id:
         prediction = (
@@ -47,9 +47,11 @@ def _resolve_features(
             raise HTTPException(status_code=422, detail="Input features not stored for this prediction")
         features = json.loads(prediction.input_features_json)
         model_type = model_type or prediction.model_used.lower().replace(" ", "_")
-        return features, model_type
+        industry = prediction.industry or "telecom"
+        return features, model_type, industry
     elif base_features:
-        return base_features, model_type
+        industry = base_features.get("industry", "telecom")
+        return base_features, model_type, industry
     else:
         raise HTTPException(status_code=400, detail="Either base_prediction_id or base_features must be provided")
 
@@ -64,12 +66,12 @@ def compare_what_if(
     Compare original vs modified customer features.
     Returns original prediction, modified prediction, and delta analysis.
     """
-    features, model_type = _resolve_features(
+    features, model_type, industry = _resolve_features(
         request.base_prediction_id, request.base_features,
         request.model_type, db, current_user
     )
     try:
-        return compare_scenarios(features, request.modifications, model_type)
+        return compare_scenarios(features, request.modifications, model_type, industry)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -84,12 +86,12 @@ def batch_what_if(
     Run multiple what-if scenarios against the same base customer.
     Body: { base_prediction_id OR base_features, scenarios: [{name, modifications}] }
     """
-    features, model_type = _resolve_features(
+    features, model_type, industry = _resolve_features(
         request.base_prediction_id, request.base_features,
         request.model_type, db, current_user
     )
     try:
-        return batch_scenarios(features, request.scenarios, model_type)
+        return batch_scenarios(features, request.scenarios, model_type, industry)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -111,4 +113,4 @@ def get_presets(
     if not prediction.input_features_json:
         raise HTTPException(status_code=422, detail="Input features not available")
     features = json.loads(prediction.input_features_json)
-    return get_preset_scenarios(features)
+    return get_preset_scenarios(features, prediction.industry or "telecom")

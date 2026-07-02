@@ -9,6 +9,7 @@ from app.models.user import User, Prediction, SegmentRun
 from app.services.segment_service import run_segmentation
 from app.utils.security import get_current_user
 from datetime import datetime, timezone
+from typing import Optional
 
 router = APIRouter(prefix="/api/segments", tags=["Customer Segmentation"])
 
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/segments", tags=["Customer Segmentation"])
 @router.post("/run")
 def run_customer_segmentation(
     n_clusters: int = Query(4, ge=2, le=8, description="Number of segments"),
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -23,17 +25,24 @@ def run_customer_segmentation(
     Run K-Means segmentation on the current user's prediction history.
     Returns segment summaries and per-prediction assignments.
     """
-    predictions = db.query(Prediction).filter(Prediction.user_id == current_user.id).all()
+    query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
+    predictions = query.all()
+
     if len(predictions) < 2:
         raise HTTPException(
             status_code=400,
-            detail=f"At least 2 predictions required for segmentation. You have {len(predictions)}."
+            detail=f"At least 2 predictions required for segmentation in {industry or 'overall'} industry. You have {len(predictions)}."
         )
 
     result = run_segmentation(predictions, n_clusters=n_clusters)
 
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
+
+    # Store industry in the results dict so we can retrieve it per industry vertical
+    result["industry"] = industry.lower() if (industry and isinstance(industry, str)) else None
 
     # Save run to DB
     run = SegmentRun(
@@ -55,31 +64,45 @@ def run_customer_segmentation(
 
 @router.get("/summary")
 def get_segment_summary(
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get the latest segmentation run summary for the current user."""
-    latest = (
+    """Get the latest segmentation run summary for the current user and industry."""
+    runs = (
         db.query(SegmentRun)
         .filter(SegmentRun.user_id == current_user.id)
         .order_by(SegmentRun.created_at.desc())
-        .first()
+        .all()
     )
-    if not latest or not latest.results_json:
-        return {"message": "No segmentation run found. POST /api/segments/run to create one.", "segments": []}
-    return json.loads(latest.results_json)
+    
+    target_ind = industry.lower() if (industry and isinstance(industry, str)) else None
+    for run in runs:
+        if not run.results_json:
+            continue
+        try:
+            data = json.loads(run.results_json)
+            if data.get("industry") == target_ind:
+                return data
+        except Exception:
+            continue
+
+    return {"message": f"No segmentation run found for {industry or 'overall'} industry. Run segmentations to see metrics.", "segments": []}
 
 
 @router.get("/customers")
 def get_segmented_customers(
     segment_label: str = Query(None, description="Filter by segment label"),
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get predictions grouped by their assigned segment."""
+    """Get predictions grouped by their assigned segment and industry."""
     query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
     if segment_label:
         query = query.filter(Prediction.segment_label == segment_label)
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
     predictions = query.order_by(Prediction.churn_probability.desc()).all()
 
     return [

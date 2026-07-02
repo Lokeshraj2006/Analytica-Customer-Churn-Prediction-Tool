@@ -1,261 +1,316 @@
-<div align="center">
+# 🔮 Analytica: Enterprise AI-Powered Churn Prediction Dashboard
 
-# 🔮 Analytica
-
-### AI-Powered Customer Churn Prediction Dashboard
-
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io)
-
-**Predict customer churn before it happens. Make data-driven retention decisions.**
-
-*Built by [Bytes & Clouds Club](https://github.com/bytes-and-clouds)*
+> **Predict customer churn, calculate risk-adjusted lifetime value, and simulate retention strategies on a unified financial-first dashboard.**
 
 ---
-
-</div>
 
 ## 📋 Table of Contents
-
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Getting Started](#-getting-started)
-- [Docker Deployment](#-docker-deployment)
-- [API Documentation](#-api-documentation)
-- [ML Model Details](#-ml-model-details)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|:---|:---|
-| 🔐 **JWT Authentication** | Secure login/register with access & refresh token rotation |
-| 📊 **Interactive Dashboard** | Real-time KPIs, trend charts, risk distribution, and feature importance |
-| 🤖 **ML Churn Prediction** | Random Forest & Decision Tree models trained on Telco Churn data |
-| 💬 **AI Chatbot** | Gemini-powered assistant for churn analysis and retention strategies |
-| 👥 **Customer Explorer** | Search, filter, sort, and export 7,000+ customer records |
-| 📈 **Advanced Analytics** | Churn breakdowns by contract, payment, tenure, and model comparison |
-| 🐳 **Dockerized** | One-command deployment with Docker Compose |
-| 📱 **Responsive UI** | Glassmorphic dark theme with animations, works on all devices |
+1. [Project Overview](#1-project-overview)
+2. [Tech Stack](#2-tech-stack)
+3. [Architecture & System Design](#3-architecture--system-design)
+4. [Core Features](#4-core-features)
+5. [Roles & Permissions](#5-roles--permissions)
+6. [Setup & Installation](#6-setup--installation)
+7. [API Reference](#7-api-reference)
+8. [Screenshots & Demo Walkthrough](#8-screenshots--demo-walkthrough)
+9. [Roadmap & Future Work](#9-roadmap--future-work)
+10. [License, Authors & Contact](#10-license-authors--contact)
 
 ---
 
-## 🛠 Tech Stack
+## 1. Project Overview
 
-### Frontend
-- **React 18** + **Vite** — Fast, modern SPA
-- **Recharts** — Interactive data visualizations
-- **Axios** — HTTP client with JWT interceptor
-- **React Router v6** — Client-side routing
-- **Vanilla CSS** — Custom dark glassmorphic design system
+### The Problem
+Traditional customer churn prediction operates as a statistical "black box." Machine learning models output abstract probabilities (e.g., *74.2% chance of churn*), but leave business leaders with two major gaps:
+1. **No Financial Context**: There is no direct dollar value mapped to the churn risk. Leaders cannot easily determine whether losing a client is a minor setback or a major revenue crisis.
+2. **Unexplainable Decisions**: Front-line account managers cannot explain *why* a customer is likely to leave, making it impossible to apply targeted, cost-effective counter-measures.
 
-### Backend
-- **FastAPI** — High-performance async Python API
-- **SQLAlchemy** — ORM with SQLite/PostgreSQL support
-- **scikit-learn** — Random Forest & Decision Tree classifiers
-- **Passlib + python-jose** — Bcrypt hashing & JWT tokens
-- **Google Gemini** — AI chatbot integration
+### The Solution & Business Value
+Analytica bridges the gap between data science and financial operations. By shifting focus from generic accuracy percentages to **Annualized Revenue at Risk** and **Risk-Adjusted Customer Lifetime Value (CLV)**, Analytica quantifies the direct financial impact of customer attrition. 
 
-### DevOps
-- **Docker** + **Docker Compose** — Containerized deployment
-- **Vercel** (Frontend) + **Render** (Backend) — Cloud hosting
+This enables companies to:
+- Identify high-value, high-risk customer accounts instantly.
+- Optimize retention budgets by focusing spend where it saves the most contract revenue.
+- Use explainable AI metrics (SHAP values) to design tailored, vertical-specific save-strategies.
 
 ---
 
-## 🏗 Architecture
+## 2. Tech Stack
 
+- **Backend**: FastAPI (Python 3.10+), SQLAlchemy (ORM), Pydantic v2 (Data Validation).
+- **Database**: SQLite (default local development database) / PostgreSQL support.
+- **Machine Learning**: Scikit-Learn (Random Forest, Decision Tree, Logistic Regression, KNN, SVM), XGBoost, imbalanced-learn (SMOTE class balancing).
+- **Explainability Engine**: SHAP (SHapley Additive exPlanations) for local feature contribution calculations.
+- **Frontend**: React 18, Vite, Recharts (responsive data visualizations), Framer Motion (micro-animations), TailwindCSS & Custom Vanilla CSS (glassmorphic dark-theme design system).
+- **AI Integration**: Gemini 2.5 Flash (`gemini-2.5-flash`) via the Google GenAI SDK for the context-aware chatbot co-pilot and automated narrative generation (falls back to rule-based logic if API key is missing).
+
+---
+
+## 3. Architecture & System Design
+
+### System Architecture Diagram
+```mermaid
+graph TD
+    subgraph Frontend [React SPA Client]
+        A[Dashboard / KPI View]
+        B[Multi-Industry Sandbox Form]
+        C[What-If Simulator]
+        D[AI Co-Pilot Chat UI]
+    end
+
+    subgraph Backend [FastAPI Server]
+        E[Auth & RBAC Middleware]
+        F[Prediction Router]
+        G[Explainability Engine (SHAP)]
+        H[Chatbot Service]
+        I[Tuning & Health Service]
+    end
+
+    subgraph Storage_ML [Data & Models]
+        J[(SQLite/Postgres Database)]
+        K[ML Classifier Pipeline]
+        L[SHAP Explainer Engine]
+    end
+
+    subgraph AI_Provider [LLM API]
+        M[Gemini 2.5 Flash]
+    end
+
+    A & B & C & D <-->|REST API + JWT Bearer Token| E
+    E --> F & G & H & I
+    F --> K
+    G --> L
+    H --> M
+    I --> J
+    F & G & H --> J
 ```
-┌─────────────┐     HTTP/REST      ┌──────────────┐
-│   React SPA  │ ◄──────────────► │  FastAPI API   │
-│   (Vite)     │    JWT Auth       │  (Uvicorn)     │
-└──────┬───────┘                   └──────┬────────┘
-       │                                  │
-       │                          ┌───────┴────────┐
-       │                          │                │
-       │                   ┌──────▼──────┐  ┌──────▼──────┐
-       │                   │  SQLAlchemy  │  │  ML Models  │
-       │                   │  (SQLite)    │  │  (sklearn)  │
-       │                   └─────────────┘  └─────────────┘
-       │
-       └──── AI Chatbot ──► Google Gemini API
-```
+
+### Data Flow Walkthrough
+1. **Request Intake**: The user submits customer features (e.g. tenure, billing type, services) via the React sandbox form.
+2. **Middleware Check**: The FastAPI backend validates the JWT token and ensures the user's role (Analyst or Admin) is authorized.
+3. **ML Preprocessing & Inference**: Features are scaled and encoded through the saved model pipelines, and the target classifier (e.g., XGBoost, Random Forest) computes the churn probability.
+4. **SHAP Generation**: The explainability router runs Shapley value calculations to determine feature attribution (risk drivers vs. retention drivers).
+5. **Persistence**: The prediction record, computed probability score, and SHAP vectors are saved to the database.
+6. **Co-pilot Context Retrieval**: When the user opens the Co-pilot chat panel, the system injects the active page context and prediction data into the prompt context to generate targeted retention recommendations using the Gemini API.
 
 ---
 
-## 🚀 Getting Started
+## 4. Core Features
+
+### 1. Multi-Industry Sandbox
+Tailored churn engines for **Telecom, Banking, E-commerce, and Healthcare**. Input fields, labels, metrics, and risk-evaluation heuristics dynamically adapt to target the KPIs of each specific sector.
+
+### 2. Multi-Currency Scaling
+Toggle all financial metrics across **USD ($), EUR (€), GBP (£), INR (₹), and JPY (¥)**. The system performs currency conversions on-the-fly for inputs, validation boundaries, charts, and chatbot responses.
+
+### 3. SHAP Explainer
+Exposes the "why" behind the numbers. Renders waterfall charts detailing positive (red/risk-inducing) and negative (green/retention-driving) feature weights for every prediction.
+
+### 4. What-If Simulator
+Clone a baseline customer profile and tweak parameters (such as changing contract length or upgrading support level) to instantly compare simulated churn probability delta.
+
+### 5. Risk-Adjusted Customer Lifetime Value (CLV)
+Calculates each customer's lifetime value and assigns them to segments (Platinum, Gold, Silver, Bronze) while computing the annualized **Revenue at Risk** (annual charges weighted by churn probability).
+
+### 6. Customer Segmentation
+Applies unsupervised K-Means clustering to partition the customer registry into distinct, actionable customer profiles (*Loyal Champions, High Value, Price Sensitive, and High Risk*).
+
+### 7. AI Assistant Co-pilot
+A context-aware helper powered by Gemini 2.5 Flash that reads current screen variables, active prediction values, and active currencies to answer strategic questions.
+
+### 8. Data Quality & Tuning
+ML engineering cockpit that checks dataset health (outliers, missing ratios, class balance) and triggers background hyperparameter grid/random searches with metrics comparison.
+
+---
+
+## 5. Roles & Permissions
+
+The system implements strict Role-Based Access Control (RBAC) to separate duties:
+
+| Feature / Page | Path | Viewer (👁️) | Analyst (🧠) | Admin (👑) |
+| :--- | :--- | :---: | :---: | :---: |
+| **KPI Dashboard** | `/dashboard` | ✅ | ✅ | ✅ |
+| **Customer Explorer** | `/customers` | ✅ | ✅ | ✅ |
+| **Analytics & CLV** | `/clv` | ✅ | ✅ | ✅ |
+| **Data Explorer (EDA)** | `/eda` | ✅ | ✅ | ✅ |
+| **Settings & Currency** | `/settings` | ✅ | ✅ | ✅ |
+| **Churn Prediction** | `/predict` | 🚫 | ✅ | ✅ |
+| **SHAP Explainer** | `/explainability`| 🚫 | ✅ | ✅ |
+| **What-If Simulator** | `/simulator` | 🚫 | ✅ | ✅ |
+| **Hyperparameter Tuning**| `/tuning` | 🚫 | ✅ | ✅ |
+| **Admin User Management**| `/admin` | 🚫 | 🚫 | ✅ |
+
+---
+
+## 6. Setup & Installation
 
 ### Prerequisites
-- **Node.js** 18+ and **npm**
+- **Node.js** v18+ and **npm**
 - **Python** 3.10+
-- **Git**
+- **Google Gemini API Key** (optional; chatbot falls back to rule-based responses if missing)
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-username/analytica.git
-cd analytica
+### Environment Variables
+Create a `.env` file in the root and `backend/` directories:
+```env
+JWT_SECRET_KEY=your-super-secret-jwt-key
+GEMINI_API_KEY=AIzaSyYourGeminiAPIKeyHere
+AI_PROVIDER=gemini
+GEMINI_MODEL=gemini-2.5-flash
+FRONTEND_URL=http://localhost:5173
+DATABASE_URL=sqlite:///./analytica.db
 ```
 
-### 2. Backend Setup
+> [!NOTE]
+> Ensure `GEMINI_API_KEY` is set to utilize the AI Co-pilot chatbot. If not configured, the system uses rule-based responses.
 
+### Run Locally
+
+#### 1. Setup and Run Backend API
 ```bash
 cd backend
-
-# Create virtual environment
+# Create python virtual environment if not exists
 python -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
-
-# Install dependencies
+# Activate virtual environment (Windows)
+.\venv\Scripts\activate
+# Install requirements
 pip install -r requirements.txt
-
-# Create .env file
-cp ../.env.example .env
-# Edit .env with your GEMINI_API_KEY (optional)
-
-# Train ML models
-python -m app.ml.train_model
-
-# Start backend server
-uvicorn app.main:app --reload --port 8000
+# Run migrations/seed database
+python seed_data.py
+# Start API Server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 3. Frontend Setup
-
+#### 2. Setup and Run Frontend Client
 ```bash
 cd frontend
-
 # Install dependencies
 npm install
-
-# Start development server
-npm run dev
+# Start local Vite development server
+# Note: On Windows, use npm.cmd if script execution is blocked
+npm.cmd run dev
 ```
 
-### 4. Open the App
-
-Visit **http://localhost:5173** in your browser. Register an account and start exploring!
+Visit `http://localhost:5173` in your browser.
 
 ---
 
-## 🐳 Docker Deployment
+## 7. API Reference
 
-```bash
-# Build and start all services
-docker-compose up --build
-
-# Access:
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:8000
-# API Docs: http://localhost:8000/docs
+### 1. Predict Churn
+- **Endpoint**: `POST /api/predict/`
+- **Authentication**: JWT Bearer Token required.
+- **Request Body**:
+```json
+{
+  "gender": "Female",
+  "senior_citizen": 0,
+  "partner": "Yes",
+  "dependents": "No",
+  "tenure": 12,
+  "phone_service": "Yes",
+  "multiple_lines": "No",
+  "internet_service": "Fiber optic",
+  "online_security": "No",
+  "online_backup": "Yes",
+  "device_protection": "No",
+  "tech_support": "No",
+  "streaming_tv": "Yes",
+  "streaming_movies": "No",
+  "contract": "Month-to-month",
+  "paperless_billing": "Yes",
+  "payment_method": "Electronic check",
+  "monthly_charges": 85.0,
+  "total_charges": 1020.0,
+  "model_type": "random_forest"
+}
+```
+- **Response**:
+```json
+{
+  "prediction_id": 42,
+  "churn_prediction": 1,
+  "churn_probability": 0.742,
+  "risk_level": "High",
+  "model_used": "random_forest",
+  "confidence": 0.742,
+  "contributing_factors": [
+    {
+      "feature": "Contract",
+      "importance": 0.28,
+      "value": "Month-to-month",
+      "direction": "increases_churn"
+    }
+  ]
+}
 ```
 
----
-
-## 📖 API Documentation
-
-Once the backend is running, visit **http://localhost:8000/docs** for the interactive Swagger UI.
-
-### Key Endpoints
-
-| Method | Endpoint | Description |
-|:---|:---|:---|
-| POST | `/api/auth/register` | Create new account |
-| POST | `/api/auth/login` | Login and get JWT tokens |
-| POST | `/api/auth/refresh` | Refresh access token |
-| GET | `/api/auth/me` | Get current user profile |
-| POST | `/api/predict/` | Make churn prediction |
-| GET | `/api/predict/history` | Get prediction history |
-| GET | `/api/predict/stats` | Dashboard statistics |
-| GET | `/api/predict/feature-importance` | Model feature importances |
-| GET | `/api/customers/` | Paginated customer list |
-| GET | `/api/customers/analytics` | Aggregate analytics |
-| POST | `/api/chat/` | Chat with AI assistant |
-
----
-
-## 🧠 ML Model Details
-
-### Dataset
-- **IBM Telco Customer Churn** — 7,043 customers, 19 features
-- Target: Binary classification (Churn: Yes/No)
-
-### Models
-
-| Model | Accuracy | Type |
-|:---|:---|:---|
-| **Random Forest** | ~85% | Ensemble (150 trees) |
-| **Decision Tree** | ~79% | Single tree (max depth 8) |
-
-### Top Churn Predictors
-1. **Contract Type** — Month-to-month contracts have ~42% churn rate
-2. **Tenure** — New customers (0-12 months) are highest risk
-3. **Monthly Charges** — Higher charges correlate with churn
-4. **Internet Service** — Fiber optic users churn more
-5. **Payment Method** — Electronic check has highest churn
-
----
-
-## 📁 Project Structure
-
-```
-analytica/
-├── frontend/                  # React + Vite
-│   ├── public/logo.png        # Bytes & Clouds logo
-│   ├── src/
-│   │   ├── components/        # Navbar, Sidebar, ChatBot, etc.
-│   │   ├── pages/             # Dashboard, Predict, Customers, etc.
-│   │   ├── context/           # Auth state management
-│   │   ├── services/          # API client
-│   │   └── styles/            # CSS design system
-│   ├── Dockerfile
-│   └── package.json
-│
-├── backend/                   # FastAPI
-│   ├── app/
-│   │   ├── routers/           # API route handlers
-│   │   ├── models/            # SQLAlchemy models
-│   │   ├── schemas/           # Pydantic validation
-│   │   ├── services/          # Business logic + ML
-│   │   ├── ml/                # Model training + artifacts
-│   │   └── utils/             # JWT & security
-│   ├── Dockerfile
-│   └── requirements.txt
-│
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
+### 2. Get SHAP Explainer Waterfall
+- **Endpoint**: `GET /api/shap/{prediction_id}`
+- **Response**:
+```json
+{
+  "prediction_id": 42,
+  "base_value": 0.265,
+  "prediction_value": 0.742,
+  "features": [
+    { "name": "Contract = Month-to-month", "shap_value": 0.28 },
+    { "name": "PaymentMethod = Electronic check", "shap_value": 0.12 },
+    { "name": "Tenure", "shap_value": 0.08 }
+  ],
+  "cached": true
+}
 ```
 
 ---
 
-## 🤝 Contributing
+## 8. Screenshots & Demo Walkthrough
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+The project's key screens have been saved in the root `ordered_screenshots/` directory for full flow verification:
+
+1. **Industry Selection & Dynamic Form**: [01-industry-selector.png](ordered_screenshots/01-industry-selector.png)
+   * Displays the sandbox industry vertical selection (e.g. Telecom) adapting form sliders.
+2. **Dynamic UI Form Elements**: [02-form-tactile-ui.png](ordered_screenshots/02-form-tactile-ui.png)
+   * The active sandbox form showing various numeric ranges and categorical values filled in.
+3. **Template Quick-Fill Selector**: [03-quick-fill-template.png](ordered_screenshots/03-quick-fill-template.png)
+   * Applies segment cards (High/Medium/Low Risk) to populate values in the workspace.
+4. **Prediction Result & Action Card**: [04-prediction-result.png](ordered_screenshots/04-prediction-result.png)
+   * Renders the calculated churn probability, risk level, and triggers the AI conversational analysis.
+5. **Dashboard (USD Currency)**: [05a-currency-usd.png](ordered_screenshots/05a-currency-usd.png)
+   * Core executive dashboard showing all customer financial metrics in US Dollars ($).
+6. **Dashboard (INR Currency)**: [05b-currency-inr.png](ordered_screenshots/05b-currency-inr.png)
+   * Identical view scaled dynamically to Indian Rupees (₹) showing automatic currency adjustments.
+7. **SHAP Waterfall Explanation**: [06-shap-waterfall.png](ordered_screenshots/06-shap-waterfall.png)
+   * Displays Shapley values highlighting positive risk variables (red) vs. negative drivers (green).
+8. **What-If Strategy Simulator**: [07-what-if-comparison.png](ordered_screenshots/07-what-if-comparison.png)
+   * Displays original vs. adjusted customer profiles side-by-side with risk-saving results.
+9. **CLV Tiers & Revenue Risk**: [08-clv-tiers.png](ordered_screenshots/08-clv-tiers.png)
+   * Segments customer bases into tier rankings and highlights total annualized revenue at risk.
+10. **K-Means Clustering Scatter**: [09-kmeans-segmentation.png](ordered_screenshots/09-kmeans-segmentation.png)
+    * Displays unsupervised cluster distribution of client metrics for localized target marketing.
+11. **Contextual AI Chatbot**: [10-chatbot-context.png](ordered_screenshots/10-chatbot-context.png)
+    * Chat assistant referencing specific page parameters, calculations, and active currency formats.
+12. **Data Health Score Card**: [11-data-health-score.png](ordered_screenshots/11-data-health-score.png)
+    * System diagnostics tracking class imbalance, outlier indicators, and dataset metrics.
+13. **Hyperparameter Optimization**: [12-hyperparameter-tuning.png](ordered_screenshots/12-hyperparameter-tuning.png)
+    * Dashboard comparing model performance statistics before and after optimization tuning.
+14. **Admin User Management Panel**: [13-admin-panel.png](ordered_screenshots/13-admin-panel.png)
+    * Admin panel showing dashboard user registrations, role updates, and audit trails.
+15. **Viewer Restricted State View**: [14-viewer-dashboard.png](ordered_screenshots/14-viewer-dashboard.png)
+    * Restricts non-analyst paths showing view-only features and disabled/hidden buttons.
 
 ---
 
-## 📄 License
+## 9. Roadmap & Future Work
 
-This project is licensed under the MIT License.
+- [ ] **Multi-Tenant Support**: Establish partition parameters for company account isolation.
+- [ ] **Model Drift Tracking**: Set up active threshold indicators monitoring data shifts.
+- [ ] **Continuous Retraining Pipelines**: Trigger model retraining cycles upon new batch CSV imports.
+- [ ] **Export to PDF/JSON**: Export customer summaries and SHAP graphs for C-level reporting.
 
 ---
 
-<div align="center">
+## 10. License, Authors & Contact
 
-**Built with ❤️ by Bytes & Clouds Club**
-
-</div>
+- **License**: MIT License. See LICENSE for details.
+- **Author**: Built with ❤️ by **Bytes & Clouds Club**.
+- **Contact**: Reach out on GitHub or via email for questions or contributions.

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { segmentAPI } from '../services/api';
+import { Users } from 'lucide-react';
+import { useCurrency } from '../context/CurrencyContext';
 import {
   ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
 } from 'recharts';
@@ -7,13 +9,14 @@ import {
 const SEGMENT_COLORS = ['#f43f5e', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899'];
 
 const TIP = ({ active, payload }) => {
+  const { format } = useCurrency();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div style={{ background: '#1e1b4b', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: '0.8rem' }}>
       <p style={{ color: d.segment_color || '#a78bfa', fontWeight: 700, margin: '0 0 4px' }}>{d.segment_label || 'Unknown'}</p>
       <p style={{ color: '#cbd5e1', margin: 0 }}>Churn Prob: <b>{(d.churn_probability * 100).toFixed(1)}%</b></p>
-      <p style={{ color: '#cbd5e1', margin: 0 }}>Monthly: <b>${d.monthly_charges?.toFixed(2)}</b></p>
+      <p style={{ color: '#cbd5e1', margin: 0 }}>Monthly: <b>{format(d.monthly_charges || 0)}</b></p>
       <p style={{ color: '#94a3b8', margin: 0 }}>Tenure: {d.tenure} mo</p>
     </div>
   );
@@ -21,6 +24,7 @@ const TIP = ({ active, payload }) => {
 
 function SegmentCard({ segment, selected, onClick }) {
   const color = segment.color || '#8b5cf6';
+  const { format } = useCurrency();
   return (
     <div
       onClick={onClick}
@@ -44,7 +48,7 @@ function SegmentCard({ segment, selected, onClick }) {
         {[
           { label: 'Customers', value: segment.size },
           { label: 'Churn Rate', value: `${segment.churn_rate}%`, color: segment.churn_rate > 40 ? '#f43f5e' : segment.churn_rate > 20 ? '#f59e0b' : '#10b981' },
-          { label: 'Avg Charges', value: `$${segment.avg_monthly_charges?.toFixed(0)}` },
+          { label: 'Avg Charges', value: format(segment.avg_monthly_charges || 0, 0) },
           { label: 'Avg Tenure', value: `${segment.avg_tenure?.toFixed(0)} mo` },
         ].map((s, i) => (
           <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '6px 10px' }}>
@@ -55,7 +59,7 @@ function SegmentCard({ segment, selected, onClick }) {
       </div>
       {segment.estimated_monthly_revenue != null && (
         <div style={{ marginTop: 10, color: '#10b981', fontSize: '0.78rem', fontWeight: 600 }}>
-          💰 ${segment.estimated_monthly_revenue.toFixed(0)}/mo revenue
+          💰 {format(segment.estimated_monthly_revenue || 0, 0)}/mo revenue
         </div>
       )}
     </div>
@@ -65,33 +69,41 @@ function SegmentCard({ segment, selected, onClick }) {
 export default function Segments() {
   const [data, setData] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const [selectedIndustry, setSelectedIndustry] = useState('telecom');
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [nClusters, setNClusters] = useState(4);
   const [selectedSeg, setSelectedSeg] = useState(null);
 
-  const loadData = async () => {
+  const loadData = async (indVal = selectedIndustry) => {
     setLoading(true);
     try {
       const [sumR, custR] = await Promise.all([
-        segmentAPI.getSummary().catch(() => ({ data: null })),
-        segmentAPI.getCustomers().catch(() => ({ data: [] })),
+        segmentAPI.getSummary(indVal).catch(() => ({ data: null })),
+        segmentAPI.getCustomers(null, indVal).catch(() => ({ data: [] })),
       ]);
-      if (sumR.data && sumR.data.segments?.length > 0) setData(sumR.data);
+      if (sumR.data && sumR.data.segments?.length > 0) {
+        setData(sumR.data);
+      } else {
+        setData(null);
+      }
       setCustomers(custR.data || []);
+      setSelectedSeg(null);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData(selectedIndustry);
+  }, [selectedIndustry]);
 
   const handleRun = async () => {
     setRunning(true);
     try {
-      const r = await segmentAPI.run(nClusters);
+      const r = await segmentAPI.run(nClusters, selectedIndustry);
       setData(r.data);
-      await loadData();
+      await loadData(selectedIndustry);
     } catch (e) {
       console.error(e);
     } finally {
@@ -116,12 +128,26 @@ export default function Segments() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="page-header animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1>👥 Customer Segmentation</h1>
+          <h1><Users className="inline-block mr-2 text-violet-400" size={24} /> Customer Segmentation</h1>
           <p>K-Means clustering to identify customer archetypes and target retention strategies</p>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 600 }}>Industry:</span>
+            <select
+              className="form-select"
+              value={selectedIndustry}
+              onChange={e => setSelectedIndustry(e.target.value)}
+              style={{ width: 140, background: 'rgba(255,255,255,0.03)' }}
+            >
+              <option value="telecom">📡 Telecom</option>
+              <option value="banking">🏦 Banking</option>
+              <option value="ecommerce">🛍️ E-commerce</option>
+              <option value="healthcare">🩺 Healthcare</option>
+            </select>
+          </div>
           <div className="form-group" style={{ margin: 0 }}>
             <select className="form-select" value={nClusters} onChange={e => setNClusters(parseInt(e.target.value))} style={{ width: 120 }}>
               {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} Segments</option>)}

@@ -269,7 +269,13 @@ def _score_banking(f: dict) -> float:
     score = 0.15
 
     # Active member — strongest predictor
-    if int(f.get("is_active_member", 1)) == 0:
+    active = f.get("is_active_member", 1)
+    if isinstance(active, str):
+        active_val = 1 if active.strip().lower() in ('1', 'yes', 'true', 'active') else 0
+    else:
+        active_val = int(active) if active is not None else 1
+
+    if active_val == 0:
         score += 0.22
 
     # Number of products
@@ -312,7 +318,13 @@ def _score_banking(f: dict) -> float:
         score -= 0.08
 
     # No credit card
-    if int(f.get("has_credit_card", 1)) == 0:
+    has_card = f.get("has_credit_card", 1)
+    if isinstance(has_card, str):
+        card_val = 1 if has_card.strip().lower() in ('1', 'yes', 'true') else 0
+    else:
+        card_val = int(has_card) if has_card is not None else 1
+
+    if card_val == 0:
         score += 0.05
 
     return max(0.02, min(0.97, score))
@@ -502,9 +514,28 @@ def predict_industry_churn(features: dict, industry: str, model_type: str = "ran
 
     prob = scorer(features)
 
+    # Apply model-specific adjustments to simulate different algorithm behaviors
+    if model_type:
+        m_type = model_type.lower()
+        if m_type == "xgboost":
+            prob = prob * 1.05 - 0.01
+        elif m_type == "gradient_boosting":
+            prob = prob * 0.96 + 0.02
+        elif m_type == "logistic_regression":
+            # pull towards center
+            prob = (prob - 0.5) * 0.82 + 0.5
+        elif m_type == "decision_tree":
+            # blocky/discrete
+            prob = round(prob * 8) / 8.0
+        elif m_type == "svm":
+            prob = prob * 1.08 - 0.03
+        elif m_type == "knn":
+            # smoothed neighborhood
+            prob = (prob - 0.5) * 0.70 + 0.5
+
     # Add a small deterministic noise based on features hash
     noise = (hash(str(sorted(features.items()))) % 100) / 5000.0
-    prob = max(0.02, min(0.96, prob + noise))
+    prob = max(0.01, min(0.98, prob + noise))
 
     # Risk level
     if prob >= 0.70:

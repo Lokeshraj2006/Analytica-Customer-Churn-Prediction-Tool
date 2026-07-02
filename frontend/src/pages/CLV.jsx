@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
   LineChart, Line, CartesianGrid, Legend,
 } from 'recharts';
+import { Gem, DollarSign, AlertTriangle, BarChart3, Trophy, Target, Flame } from 'lucide-react';
 
 const C = {
   violet: '#8b5cf6', rose: '#f43f5e', emerald: '#10b981', amber: '#f59e0b',
@@ -19,13 +20,14 @@ const TIER_COLORS = {
 };
 
 const CLVTip = ({ active, payload }) => {
+  const { format } = useCurrency();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div style={{ background: '#1e1b4b', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: '0.82rem' }}>
       <p style={{ color: '#a78bfa', fontWeight: 700, margin: '0 0 4px' }}>Prediction #{d.prediction_id}</p>
-      <p style={{ color: '#cbd5e1', margin: 0 }}>Risk-Adjusted CLV: <strong style={{ color: C.emerald }}>${d.risk_adjusted_clv?.toFixed(0)}</strong></p>
-      <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.75rem' }}>Revenue at Risk: ${d.revenue_at_risk?.toFixed(0)}</p>
+      <p style={{ color: '#cbd5e1', margin: 0 }}>Risk-Adjusted CLV: <strong style={{ color: C.emerald }}>{format(d.risk_adjusted_clv || 0, 0)}</strong></p>
+      <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.75rem' }}>Revenue at Risk: {format(d.revenue_at_risk || 0, 0)}</p>
       <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.75rem' }}>Churn: {(d.churn_probability * 100).toFixed(1)}%</p>
     </div>
   );
@@ -62,21 +64,23 @@ function assignTier(clv) {
 export default function CLV() {
   const [summary, setSummary] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const [selectedIndustry, setSelectedIndustry] = useState('telecom');
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('risk_adjusted_clv');
-  const { symbol } = useCurrency?.() || { symbol: '$' };
+  const { currentCurrency, format } = useCurrency();
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
-      clvAPI.getSummary().catch(() => ({ data: {} })),
-      clvAPI.getCustomers({ limit: 100, sort_by: 'risk_adjusted_clv' }).catch(() => ({ data: [] })),
+      clvAPI.getSummary(selectedIndustry).catch(() => ({ data: {} })),
+      clvAPI.getCustomers({ limit: 100, sort_by: 'risk_adjusted_clv', industry: selectedIndustry }).catch(() => ({ data: [] })),
     ])
       .then(([sumRes, custRes]) => {
         setSummary(sumRes.data);
         setCustomers(custRes.data || []);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedIndustry]);
 
   // Tier distribution
   const tierData = useMemo(() => {
@@ -115,25 +119,41 @@ export default function CLV() {
     </div>
   );
 
-  const fmt = v => `${symbol}${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const fmt = v => format(v || 0, 0);
 
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="page-header animate-fade-in">
-        <h1 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 10, padding: '4px 10px', fontSize: '0.9rem' }}>💎</span>
-          Customer Lifetime Value
-        </h1>
-        <p>Revenue intelligence — identify high-value customers and protect revenue at risk</p>
+      <div className="page-header animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 10, margin: 0 }}>
+            <span style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 10, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Gem size={16} className="text-emerald-400" /></span>
+            Customer Lifetime Value
+          </h1>
+          <p style={{ margin: 0, marginTop: 4 }}>Revenue intelligence — identify high-value customers and protect revenue at risk</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Active Industry:</span>
+          <select
+            className="form-select"
+            value={selectedIndustry}
+            onChange={e => setSelectedIndustry(e.target.value)}
+            style={{ minWidth: 160, background: 'rgba(255,255,255,0.03)' }}
+          >
+            <option value="telecom">📡 Telecom</option>
+            <option value="banking">🏦 Banking</option>
+            <option value="ecommerce">🛍️ E-commerce</option>
+            <option value="healthcare">🩺 Healthcare</option>
+          </select>
+        </div>
       </div>
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard icon="💰" label="Total Portfolio CLV" value={fmt(summary?.total_clv)} subtext={`${summary?.total_predictions || 0} customers`} color={C.emerald} delay={0} />
-        <StatCard icon="⚠️" label="Revenue at Risk" value={fmt(summary?.total_revenue_at_risk)} subtext="From predicted churners" color={C.rose} delay={50} />
-        <StatCard icon="📊" label="Avg. Risk-Adjusted CLV" value={fmt(summary?.avg_risk_adjusted_clv)} subtext="Per customer" color={C.violet} delay={100} />
-        <StatCard icon="🏆" label="Highest CLV" value={fmt(summary?.max_clv)} subtext="Top customer value" color={C.amber} delay={150} />
+        <StatCard icon={<DollarSign size={20} className="text-emerald-400" />} label="Total Portfolio CLV" value={fmt(summary?.total_clv)} subtext={`${summary?.total_predictions || 0} customers`} color={C.emerald} delay={0} />
+        <StatCard icon={<AlertTriangle size={20} className="text-rose-400" />} label="Revenue at Risk" value={fmt(summary?.total_revenue_at_risk)} subtext="From predicted churners" color={C.rose} delay={50} />
+        <StatCard icon={<BarChart3 size={20} className="text-violet-400" />} label="Avg. Risk-Adjusted CLV" value={fmt(summary?.avg_risk_adjusted_clv)} subtext="Per customer" color={C.violet} delay={100} />
+        <StatCard icon={<Trophy size={20} className="text-amber-400" />} label="Highest CLV" value={fmt(summary?.max_clv)} subtext="Top customer value" color={C.amber} delay={150} />
       </div>
 
       {/* Charts Row */}
@@ -141,7 +161,7 @@ export default function CLV() {
         {/* Tier Distribution Pie */}
         <div className="glass-card animate-fade-in-up">
           <h3 style={{ color: '#e2e8f0', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.1rem' }}>🎯</span> CLV Tier Distribution
+            <Target size={18} className="text-indigo-400" /> CLV Tier Distribution
           </h3>
           {tierData.length > 0 ? (
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -180,9 +200,9 @@ export default function CLV() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={riskData} margin={{ left: 10, right: 10, top: 0, bottom: 0 }}>
                 <XAxis dataKey="level" tick={{ fill: '#cbd5e1', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}K`} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => { const local = v * (currentCurrency?.rate || 1.0); return `${currentCurrency?.symbol || '$'}${(local / 1000).toFixed(0)}K`; }} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue at Risk']}
+                  formatter={(v) => [format(v, 0), 'Revenue at Risk']}
                   contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, fontSize: '0.82rem' }}
                 />
                 <Bar dataKey="totalRev" radius={[6, 6, 0, 0]} animationDuration={800}>

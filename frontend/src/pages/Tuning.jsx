@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { tuningAPI } from '../services/api';
+import { Settings2, Zap, Hourglass, Clock, Trophy } from 'lucide-react';
 
 const C = { violet: '#8b5cf6', rose: '#f43f5e', amber: '#f59e0b', emerald: '#10b981', cyan: '#06b6d4', slate: '#64748b' };
 
@@ -118,7 +119,7 @@ export default function Tuning() {
     <div className="page-container">
       {/* Header */}
       <div className="page-header animate-fade-in">
-        <h1>⚙️ Hyperparameter Tuning</h1>
+        <h1><Settings2 className="inline-block mr-2 text-gray-400" size={24} /> Hyperparameter Tuning</h1>
         <p>Grid Search & Randomized Search CV to optimize model performance — runs in background</p>
       </div>
 

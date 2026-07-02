@@ -1,7 +1,7 @@
 """Prediction API routes."""
 
 import json
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,8 +11,11 @@ from app.schemas.prediction import (
     PredictionDetail, DashboardStats, FeatureImportance, ContributingFactor
 )
 from app.services.ml_service import predict_churn, get_feature_importance, get_model_accuracy
+from app.services import ml_service as _ml_service
+from app.services.shap_service import compute_shap_values, shap_result_to_json, KERNEL_MODELS
 from app.utils.security import get_current_user
 from typing import List, Optional
+import numpy as np
 
 router = APIRouter(prefix="/api/predict", tags=["Predictions"])
 
@@ -105,6 +108,33 @@ def make_prediction(
         db.commit()
         db.refresh(prediction)
 
+        # Auto-compute SHAP values so Global Summary always has data
+        try:
+            model_key = None
+            for k, display in _ml_service.MODEL_DISPLAY_NAMES.items():
+                if display == result["model_used"] or k == result["model_used"].lower().replace(" ", "_"):
+                    model_key = k
+                    break
+            if model_key is None:
+                model_key = _ml_service.MODEL_KEYS[0]
+            model = _ml_service._models.get(model_key)
+            if model:
+                X_instance = _ml_service.preprocess_input(features)
+                feature_names = _ml_service._feature_names or _ml_service.FEATURE_COLUMNS
+                background = None
+                if model_key in KERNEL_MODELS:
+                    background = np.random.RandomState(42).randn(50, len(feature_names))
+                shap_result = compute_shap_values(
+                    model_key=model_key, model=model, X_instance=X_instance,
+                    feature_names=feature_names, churn_probability=result["churn_probability"],
+                    background=background,
+                )
+                if shap_result and "error" not in shap_result:
+                    prediction.shap_values_json = shap_result_to_json(shap_result)
+                    db.commit()
+        except Exception:
+            pass  # SHAP is best-effort; never block the prediction response
+
         return PredictionResponse(
             id=prediction.id,
             churn_prediction=result["churn_prediction"],
@@ -125,6 +155,7 @@ def get_prediction_history(
     skip: int = 0,
     limit: int = 50,
     risk_level: Optional[str] = None,
+    industry: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -133,6 +164,9 @@ def get_prediction_history(
 
     if risk_level and risk_level in ("Low", "Medium", "High"):
         query = query.filter(Prediction.risk_level == risk_level)
+
+    if industry and isinstance(industry, str):
+        query = query.filter(Prediction.industry == industry.lower())
 
     predictions = (
         query

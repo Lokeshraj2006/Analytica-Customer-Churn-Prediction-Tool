@@ -18,14 +18,18 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./analytica.db"
 
-    # AI Provider — gemini | openai | ollama
-    AI_PROVIDER: str = "gemini"
+    # AI Provider — gemini | openai | ollama | groq | grok
+    AI_PROVIDER: str = "grok"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"       # single source of truth
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROK_API_KEY: str = ""
+    GROK_MODEL: str = "grok-2-1212"
 
     # AI Limits
     AI_CACHE_TTL: int = 3600     # seconds — cached response lifetime

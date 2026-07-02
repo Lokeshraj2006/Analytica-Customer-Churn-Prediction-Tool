@@ -42,7 +42,7 @@ async def chat(
                 "model_used": prediction.model_used,
             })
 
-    result = await get_chat_response(message.message, prediction_context)
+    result = await get_chat_response(message.message, prediction_context, message.page_context)
 
     # Persist chat message to database
     chat_record = ChatMessageModel(

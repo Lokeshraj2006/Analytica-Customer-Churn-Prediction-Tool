@@ -22,25 +22,24 @@ import {
 } from 'react-icons/hi';
 
 /**
- * Role-based navigation — now with V4.0 sections
+ * Role-based navigation — now with V1.0 sections
  */
 const ALL_NAV = [
   // ── Core ──────────────────────────────────────────────────────────────────
   { path: '/dashboard',   icon: <HiOutlineChartBar />,      label: 'Dashboard',      roles: ['analyst', 'viewer', 'admin'], section: 'core' },
-  { path: '/predict',     icon: <HiOutlineLightningBolt />,  label: 'Predict Churn',  roles: ['analyst', 'admin'],           section: 'core' },
+  { path: '/predict',     icon: <HiOutlineLightningBolt />,  label: 'Churn Prediction',  roles: ['analyst', 'admin'],           section: 'core' },
   { path: '/customers',   icon: <HiOutlineUserGroup />,      label: 'Customers',      roles: ['analyst', 'viewer', 'admin'], section: 'core' },
   { path: '/analytics',   icon: <HiOutlineChartPie />,       label: 'Analytics',      roles: ['analyst', 'viewer', 'admin'], section: 'core' },
   { path: '/eda',         icon: <HiOutlineBeaker />,         label: 'Data Explorer',  roles: ['analyst', 'viewer', 'admin'], section: 'core' },
 
-  // ── V4.0 Intelligence ─────────────────────────────────────────────────────
+  // ── V1.0 Intelligence ─────────────────────────────────────────────────────
   { path: '/explainability', icon: <HiOutlineSparkles />,    label: 'SHAP Explainer',     roles: ['analyst', 'admin'],           section: 'intelligence' },
   { path: '/simulator',      icon: <HiOutlineRefresh />,     label: 'What-If Simulator',  roles: ['analyst', 'admin'],           section: 'intelligence' },
   { path: '/segments',       icon: <HiOutlineCollection />,  label: 'Segmentation',       roles: ['analyst', 'viewer', 'admin'], section: 'intelligence' },
   { path: '/executive',      icon: <HiOutlineTrendingUp />,  label: 'Executive Insights', roles: ['analyst', 'viewer', 'admin'], section: 'intelligence' },
   { path: '/clv',              icon: <HiOutlineCurrencyDollar />, label: 'CLV Dashboard',     roles: ['analyst', 'viewer', 'admin'], section: 'intelligence' },
-  { path: '/multi-industry',   icon: <HiOutlineGlobe />,         label: 'Multi-Industry',    roles: ['analyst', 'viewer', 'admin'], section: 'intelligence' },
 
-  // ── V4.0 Engineering ─────────────────────────────────────────────────────
+  // ── V1.0 Engineering ─────────────────────────────────────────────────────
   { path: '/data-quality',   icon: <HiOutlineDatabase />,    label: 'Data Quality',       roles: ['analyst', 'viewer', 'admin'], section: 'engineering' },
   { path: '/tuning',         icon: <HiOutlineAdjustments />, label: 'HP Tuning',          roles: ['analyst', 'admin'],           section: 'engineering' },
 
@@ -78,7 +77,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         <img src="/logo.png" alt="Analytica" className="sidebar-logo" />
         <div className="sidebar-brand">
           <span className="sidebar-brand-name">Analytica</span>
-          <span className="sidebar-brand-sub">v4.0 · Bytes &amp; Clouds</span>
+          <span className="sidebar-brand-sub">v1.0 · Bytes &amp; Clouds</span>
         </div>
       </div>
 
@@ -125,7 +124,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <div className="sidebar-footer">
         {!collapsed && (
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Analytica v4.0.0<br />
+            Analytica v1.0.0<br />
             © 2026 Bytes &amp; Clouds
           </div>
         )}

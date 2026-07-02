@@ -365,7 +365,7 @@ export default function EDA() {
       {tab === 'overview' && (
         <div key="overview" className="analytics-grid stagger-children tab-content-animate">
           {/* Churn Donut */}
-          <div className="analytics-card">
+          <div className="glass-card animate-fade-in-up">
             <div className="chart-header">
               <div>
                 <h3 className="chart-title">Churn Distribution</h3>
@@ -397,7 +397,7 @@ export default function EDA() {
 
           {/* Churn by Contract */}
           {churnDist?.by_contract && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Churn by Contract Type</h3>
@@ -420,7 +420,7 @@ export default function EDA() {
 
           {/* Churn by Internet */}
           {churnDist?.by_internet && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Churn by Internet Service</h3>
@@ -443,7 +443,7 @@ export default function EDA() {
 
           {/* Churn by Payment */}
           {churnDist?.by_payment && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Churn by Payment Method</h3>
@@ -468,7 +468,7 @@ export default function EDA() {
       {tab === 'correlation' && (
         <div key="correlation" style={{ display: 'flex', flexDirection: 'column', gap: 24 }} className="tab-content-animate">
           {/* Heatmap */}
-          <div className="analytics-card analytics-full">
+          <div className="glass-card analytics-full animate-fade-in-up">
             <div className="chart-header">
               <div>
                 <h3 className="chart-title">Feature Correlation Heatmap</h3>
@@ -482,7 +482,7 @@ export default function EDA() {
           </div>
 
           {/* Correlation with Churn bar */}
-          <div className="analytics-card analytics-full">
+          <div className="glass-card analytics-full animate-fade-in-up">
             <div className="chart-header">
               <div>
                 <h3 className="chart-title">Feature Correlation with Churn</h3>
@@ -501,7 +501,7 @@ export default function EDA() {
         <div key="distributions" className="analytics-grid stagger-children tab-content-animate">
           {/* Tenure distribution */}
           {churnDist?.by_tenure && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Tenure vs. Churn</h3>
@@ -525,7 +525,7 @@ export default function EDA() {
 
           {/* Monthly charges distribution */}
           {churnDist?.by_charges && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Monthly Charges vs. Churn</h3>
@@ -548,7 +548,7 @@ export default function EDA() {
 
           {/* Churn rate by tenure (line-style bar) */}
           {churnDist?.by_tenure && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Churn Rate % by Tenure Band</h3>
@@ -570,7 +570,7 @@ export default function EDA() {
 
           {/* Senior citizen */}
           {churnDist?.by_senior && (
-            <div className="analytics-card">
+            <div className="glass-card animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Senior Citizens vs. Churn</h3>
@@ -627,7 +627,7 @@ export default function EDA() {
           </div>
 
           {/* Benchmark Table */}
-          <div className="analytics-card analytics-full">
+          <div className="glass-card analytics-full animate-fade-in-up">
             <div className="chart-header">
               <div>
                 <h3 className="chart-title">All Model Performance Comparison</h3>
@@ -639,7 +639,7 @@ export default function EDA() {
 
           {/* Radar chart comparison */}
           {modelComparison.models?.length >= 3 && (
-            <div className="analytics-card analytics-full">
+            <div className="glass-card analytics-full animate-fade-in-up">
               <div className="chart-header">
                 <div>
                   <h3 className="chart-title">Multi-Metric Radar</h3>
@@ -676,7 +676,7 @@ export default function EDA() {
           )}
 
           {/* Accuracy bar chart */}
-          <div className="analytics-card analytics-full">
+          <div className="glass-card analytics-full animate-fade-in-up">
             <div className="chart-header">
               <div>
                 <h3 className="chart-title">Accuracy Comparison</h3>

@@ -117,7 +117,7 @@ export default function Analytics() {
 
       <div className="analytics-grid stagger-children">
         {/* Churn by Contract */}
-        <div className="analytics-card">
+        <div className="glass-card animate-fade-in-up">
           <div className="chart-header">
             <div>
               <h3 className="chart-title">Churn by Contract Type</h3>
@@ -138,7 +138,7 @@ export default function Analytics() {
         </div>
 
         {/* Churn by Internet Service */}
-        <div className="analytics-card">
+        <div className="glass-card animate-fade-in-up">
           <div className="chart-header">
             <div>
               <h3 className="chart-title">Churn by Internet Service</h3>
@@ -167,7 +167,7 @@ export default function Analytics() {
         </div>
 
         {/* Churn by Payment Method */}
-        <div className="analytics-card">
+        <div className="glass-card animate-fade-in-up">
           <div className="chart-header">
             <div>
               <h3 className="chart-title">Churn by Payment Method</h3>
@@ -193,7 +193,7 @@ export default function Analytics() {
         </div>
 
         {/* Tenure Distribution */}
-        <div className="analytics-card">
+        <div className="glass-card animate-fade-in-up">
           <div className="chart-header">
             <div>
               <h3 className="chart-title">Tenure vs. Churn</h3>
@@ -214,7 +214,7 @@ export default function Analytics() {
         </div>
 
         {/* Model Comparison — all models */}
-        <div className="analytics-card analytics-full">
+        <div className="glass-card analytics-full animate-fade-in-up">
           <div className="chart-header">
             <div>
               <h3 className="chart-title">All Models — Accuracy Comparison</h3>

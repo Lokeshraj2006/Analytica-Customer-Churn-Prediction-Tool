@@ -1,8 +1,8 @@
 """
-Analytica V4.0 Database Migration
+Analytica V1.0 Database Migration
 Safely adds new columns to the existing SQLite database without data loss.
 
-Run: python migrate_v4.py
+Run: python migrate_v1.py
 """
 
 import sqlite3
@@ -12,7 +12,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "analytica.db")
 
 
 MIGRATIONS = [
-    # Prediction table — V4.0 extensions
+    # Prediction table — V1.0 extensions
     "ALTER TABLE predictions ADD COLUMN industry VARCHAR(50) DEFAULT 'telecom'",
     "ALTER TABLE predictions ADD COLUMN shap_values_json TEXT",
     "ALTER TABLE predictions ADD COLUMN clv_score REAL",
@@ -49,7 +49,7 @@ MIGRATIONS = [
         results_json TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )""",
-    # V4.0.1 — Precision / Recall in tuning
+    # V1.0.1 — Precision / Recall in tuning
     "ALTER TABLE tuning_jobs ADD COLUMN baseline_precision REAL",
     "ALTER TABLE tuning_jobs ADD COLUMN best_precision REAL",
     "ALTER TABLE tuning_jobs ADD COLUMN baseline_recall REAL",

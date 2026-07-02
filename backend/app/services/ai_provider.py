@@ -189,6 +189,130 @@ class OllamaProvider(AIProvider):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Groq Provider
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GroqProvider(AIProvider):
+    def __init__(self, api_key: str, model: str, system_instruction: str = ""):
+        self._api_key = api_key
+        self._model = model or "llama-3.3-70b-versatile"
+        self._system = system_instruction
+
+    @property
+    def model_name(self) -> str:
+        return f"groq/{self._model}"
+
+    async def complete(self, prompt: str, context: Optional[dict] = None) -> str:
+        key = _cache_key(prompt, context)
+        if key in _response_cache:
+            return _response_cache[key]
+        if not _check_rate_limit():
+            raise RuntimeError("AI rate limit exceeded. Please wait a moment.")
+        
+        # Try utilizing the openai client with custom base_url first
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=self._api_key, base_url="https://api.groq.com/openai/v1")
+            messages = []
+            if self._system:
+                messages.append({"role": "system", "content": self._system})
+            messages.append({"role": "user", "content": prompt})
+            response = client.chat.completions.create(model=self._model, messages=messages)
+            text = response.choices[0].message.content
+            _response_cache[key] = text
+            return text
+        except Exception as e:
+            # Fallback to direct HTTP request with urllib
+            import json
+            import urllib.request
+            try:
+                payload = json.dumps({
+                    "model": self._model,
+                    "messages": [
+                        *([{"role": "system", "content": self._system}] if self._system else []),
+                        {"role": "user", "content": prompt}
+                    ]
+                }).encode()
+                req = urllib.request.Request(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    data=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self._api_key}"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = json.loads(resp.read())
+                text = data["choices"][0]["message"]["content"]
+                _response_cache[key] = text
+                return text
+            except Exception as inner_e:
+                raise RuntimeError(f"Groq API error (Direct: {inner_e}) (SDK: {e})")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Grok (xAI) Provider
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GrokProvider(AIProvider):
+    def __init__(self, api_key: str, model: str, system_instruction: str = ""):
+        self._api_key = api_key
+        self._model = model or "grok-2-1212"
+        self._system = system_instruction
+
+    @property
+    def model_name(self) -> str:
+        return f"grok/{self._model}"
+
+    async def complete(self, prompt: str, context: Optional[dict] = None) -> str:
+        key = _cache_key(prompt, context)
+        if key in _response_cache:
+            return _response_cache[key]
+        if not _check_rate_limit():
+            raise RuntimeError("AI rate limit exceeded. Please wait a moment.")
+        
+        # Try utilizing the openai client with custom base_url first
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=self._api_key, base_url="https://api.xai.com/v1")
+            messages = []
+            if self._system:
+                messages.append({"role": "system", "content": self._system})
+            messages.append({"role": "user", "content": prompt})
+            response = client.chat.completions.create(model=self._model, messages=messages)
+            text = response.choices[0].message.content
+            _response_cache[key] = text
+            return text
+        except Exception as e:
+            # Fallback to direct HTTP request with urllib
+            import json
+            import urllib.request
+            try:
+                payload = json.dumps({
+                    "model": self._model,
+                    "messages": [
+                        *([{"role": "system", "content": self._system}] if self._system else []),
+                        {"role": "user", "content": prompt}
+                    ]
+                }).encode()
+                req = urllib.request.Request(
+                    "https://api.xai.com/v1/chat/completions",
+                    data=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self._api_key}"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = json.loads(resp.read())
+                text = data["choices"][0]["message"]["content"]
+                _response_cache[key] = text
+                return text
+            except Exception as inner_e:
+                raise RuntimeError(f"Grok API error (Direct: {inner_e}) (SDK: {e})")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Factory
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -227,6 +351,26 @@ def get_ai_provider(system_instruction: str = "") -> Optional[AIProvider]:
         _provider_instance = OllamaProvider(
             base_url=settings.OLLAMA_BASE_URL,
             model=settings.OLLAMA_MODEL,
+            system_instruction=system_instruction,
+        )
+        return _provider_instance
+
+    elif provider_key == "groq":
+        if not settings.GROQ_API_KEY:
+            return None
+        _provider_instance = GroqProvider(
+            api_key=settings.GROQ_API_KEY,
+            model=settings.GROQ_MODEL,
+            system_instruction=system_instruction,
+        )
+        return _provider_instance
+
+    elif provider_key == "grok":
+        if not settings.GROK_API_KEY:
+            return None
+        _provider_instance = GrokProvider(
+            api_key=settings.GROK_API_KEY,
+            model=settings.GROK_MODEL,
             system_instruction=system_instruction,
         )
         return _provider_instance

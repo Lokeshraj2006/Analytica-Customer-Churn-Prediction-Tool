@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { edaAPI } from '../services/api';
+import { Microscope, BarChart3, CheckCircle, TrendingUp, AlertTriangle, Check, X, HelpCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
 const C = { violet: '#8b5cf6', rose: '#f43f5e', amber: '#f59e0b', emerald: '#10b981', cyan: '#06b6d4', slate: '#64748b' };

@@ -1,4 +1,4 @@
-"""EDA (Exploratory Data Analysis) API router — V4.0 with data quality endpoint."""
+"""EDA (Exploratory Data Analysis) API router — V1.0 with data quality endpoint."""
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.services.ml_service import (

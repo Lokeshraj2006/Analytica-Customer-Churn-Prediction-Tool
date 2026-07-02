@@ -1,20 +1,53 @@
 import { useState, useEffect, useRef } from 'react';
 import { predictionAPI, simulatorAPI } from '../services/api';
+import { FlaskConical, Zap, ClipboardList } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip } from 'recharts';
 
 const C = { violet: '#8b5cf6', rose: '#f43f5e', amber: '#f59e0b', emerald: '#10b981', cyan: '#06b6d4' };
 
-const TELECOM_FIELDS = [
-  { key: 'contract', label: 'Contract', type: 'select', options: ['Month-to-month', 'One year', 'Two year'] },
-  { key: 'internet_service', label: 'Internet Service', type: 'select', options: ['DSL', 'Fiber optic', 'No'] },
-  { key: 'tech_support', label: 'Tech Support', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-  { key: 'online_security', label: 'Online Security', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-  { key: 'payment_method', label: 'Payment Method', type: 'select', options: ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'] },
-  { key: 'paperless_billing', label: 'Paperless Billing', type: 'select', options: ['Yes', 'No'] },
-  { key: 'tenure', label: 'Tenure (months)', type: 'number', min: 0, max: 72, step: 1 },
-  { key: 'monthly_charges', label: 'Monthly Charges ($)', type: 'number', min: 0, max: 200, step: 0.01 },
-];
+const INDUSTRY_FIELDS = {
+  telecom: [
+    { key: 'contract', label: 'Contract', type: 'select', options: ['Month-to-month', 'One year', 'Two year'] },
+    { key: 'internet_service', label: 'Internet Service', type: 'select', options: ['DSL', 'Fiber optic', 'No'] },
+    { key: 'tech_support', label: 'Tech Support', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+    { key: 'online_security', label: 'Online Security', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+    { key: 'payment_method', label: 'Payment Method', type: 'select', options: ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'] },
+    { key: 'paperless_billing', label: 'Paperless Billing', type: 'select', options: ['Yes', 'No'] },
+    { key: 'tenure', label: 'Tenure (months)', type: 'number', min: 0, max: 72, step: 1 },
+    { key: 'monthly_charges', label: 'Monthly Charges ($)', type: 'number', min: 0, max: 200, step: 0.01 },
+  ],
+  banking: [
+    { key: 'is_active_member', label: 'Active Member', type: 'select', options: [1, 0], option_labels: { 1: 'Yes', 0: 'No' } },
+    { key: 'num_products', label: 'Number of Products', type: 'select', options: [1, 2, 3, 4] },
+    { key: 'has_credit_card', label: 'Has Credit Card', type: 'select', options: [1, 0], option_labels: { 1: 'Yes', 0: 'No' } },
+    { key: 'credit_score', label: 'Credit Score', type: 'number', min: 300, max: 850, step: 1 },
+    { key: 'balance', label: 'Account Balance ($)', type: 'number', min: 0, max: 300000, step: 1 },
+    { key: 'tenure', label: 'Tenure (years)', type: 'number', min: 0, max: 20, step: 1 },
+    { key: 'age', label: 'Age', type: 'number', min: 18, max: 95, step: 1 },
+    { key: 'estimated_salary', label: 'Estimated Salary ($)', type: 'number', min: 10000, max: 300000, step: 100 },
+  ],
+  ecommerce: [
+    { key: 'days_since_last_purchase', label: 'Days Since Last Purchase', type: 'number', min: 0, max: 365, step: 1 },
+    { key: 'cart_abandonment_rate', label: 'Cart Abandonment Rate (%)', type: 'number', min: 0, max: 100, step: 0.1 },
+    { key: 'support_tickets', label: 'Support Tickets', type: 'number', min: 0, max: 20, step: 1 },
+    { key: 'loyalty_tier', label: 'Loyalty Tier', type: 'select', options: ['Bronze', 'Silver', 'Gold', 'Platinum'] },
+    { key: 'subscription_type', label: 'Subscription Type', type: 'select', options: ['Free', 'Basic', 'Premium'] },
+    { key: 'tenure_months', label: 'Tenure (months)', type: 'number', min: 0, max: 120, step: 1 },
+    { key: 'total_orders', label: 'Total Orders', type: 'number', min: 1, max: 200, step: 1 },
+    { key: 'avg_order_value', label: 'Avg Order Value ($)', type: 'number', min: 5, max: 1000, step: 0.1 },
+  ],
+  healthcare: [
+    { key: 'appointment_no_shows', label: 'Appointment No-Shows', type: 'number', min: 0, max: 30, step: 1 },
+    { key: 'days_since_last_visit', label: 'Days Since Last Visit', type: 'number', min: 0, max: 365, step: 1 },
+    { key: 'patient_satisfaction', label: 'Patient Satisfaction (1-10)', type: 'number', min: 1, max: 10, step: 1 },
+    { key: 'insurance_type', label: 'Insurance Type', type: 'select', options: ['None', 'Basic', 'Premium', 'Private'] },
+    { key: 'payment_type', label: 'Payment Type', type: 'select', options: ['Cash', 'Credit Card', 'Insurance'] },
+    { key: 'specialist_visits', label: 'Specialist Visits', type: 'number', min: 0, max: 20, step: 1 },
+    { key: 'prescription_count', label: 'Prescription Count', type: 'number', min: 0, max: 15, step: 1 },
+    { key: 'chronic_conditions', label: 'Chronic Conditions', type: 'number', min: 0, max: 5, step: 1 },
+  ]
+};
 
 function ProbMeter({ probability, label, color }) {
   const pct = Math.round((probability || 0) * 100);
@@ -46,7 +79,7 @@ function DeltaBadge({ value, unit = '%', invert = false }) {
 }
 
 export default function Simulator() {
-  const { format } = useCurrency();
+  const { format, currentCurrency } = useCurrency();
   const [recentPredictions, setRecentPredictions] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [mods, setMods] = useState({});
@@ -56,6 +89,32 @@ export default function Simulator() {
   const [batchResults, setBatchResults] = useState(null);
   const [batchLoading, setBatchLoading] = useState(false);
   const [tab, setTab] = useState('manual'); // manual | presets | batch
+
+  const CURRENCY_KEYS = ['monthly_charges', 'balance', 'avg_order_value', 'estimated_salary'];
+
+  const convertModsToLocal = (m) => {
+    const res = { ...m };
+    CURRENCY_KEYS.forEach(k => {
+      if (res[k] !== undefined) {
+        res[k] = parseFloat((res[k] * currentCurrency.rate).toFixed(2));
+      }
+    });
+    return res;
+  };
+
+  const convertModsToUSD = (m) => {
+    const res = { ...m };
+    CURRENCY_KEYS.forEach(k => {
+      if (res[k] !== undefined && res[k] !== '') {
+        res[k] = parseFloat((res[k] / currentCurrency.rate).toFixed(2));
+      }
+    });
+    return res;
+  };
+
+  const selectedPrediction = recentPredictions.find(p => String(p.id) === String(selectedId));
+  const currentIndustry = selectedPrediction?.industry || 'telecom';
+  const currentFields = INDUSTRY_FIELDS[currentIndustry] || INDUSTRY_FIELDS.telecom;
 
   useEffect(() => {
     predictionAPI.getHistory(0, 20)
@@ -83,9 +142,10 @@ export default function Simulator() {
     setLoading(true);
     setResult(null);
     try {
+      const usdMods = convertModsToUSD(mods);
       const r = await simulatorAPI.compare({
         base_prediction_id: parseInt(selectedId),
-        modifications: mods,
+        modifications: usdMods,
         model_type: 'random_forest',
       });
       setResult(r.data);
@@ -115,7 +175,7 @@ export default function Simulator() {
   };
 
   const applyPreset = (preset) => {
-    setMods(preset.modifications);
+    setMods(convertModsToLocal(preset.modifications));
     setTab('manual');
   };
 
@@ -127,7 +187,7 @@ export default function Simulator() {
     <div className="page-container">
       {/* Header */}
       <div className="page-header animate-fade-in">
-        <h1>⚗️ What-If Simulator</h1>
+        <h1><FlaskConical className="inline-block mr-2 text-amber-400" size={24} /> What-If Simulator</h1>
         <p>Modify customer attributes and see how churn probability changes in real-time</p>
       </div>
 
@@ -146,7 +206,7 @@ export default function Simulator() {
             <option value="">— Choose a prediction —</option>
             {recentPredictions.map(p => (
               <option key={p.id} value={p.id}>
-                #{p.id} · {p.risk_level} Risk · {(p.churn_probability * 100).toFixed(1)}% · {p.contract} · ${p.monthly_charges}/mo
+                #{p.id} · [{(p.industry || 'telecom').toUpperCase()}] · {p.risk_level} Risk · {(p.churn_probability * 100).toFixed(1)}% · {p.contract || 'N/A'} · {format(p.monthly_charges)}/mo
               </option>
             ))}
           </select>
@@ -178,9 +238,9 @@ export default function Simulator() {
             <div className="glass-card animate-fade-in-up" style={{ marginBottom: 20 }}>
               <h3 style={{ color: '#e2e8f0', marginBottom: 16, fontSize: '0.95rem' }}>Step 2 — Modify Customer Attributes</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
-                {TELECOM_FIELDS.map(f => (
+                {currentFields.map(f => (
                   <div key={f.key} className="form-group">
-                    <label className="form-label">{f.label}</label>
+                    <label className="form-label">{f.label.replace('($)', `(${currentCurrency.symbol})`)}</label>
                     {f.type === 'select' ? (
                       <select
                         className="form-select"
@@ -188,7 +248,11 @@ export default function Simulator() {
                         onChange={e => handleModChange(f.key, e.target.value)}
                       >
                         <option value="">— no change —</option>
-                        {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+                        {f.options.map(o => (
+                          <option key={o} value={o}>
+                            {f.option_labels ? (f.option_labels[o] || o) : o}
+                          </option>
+                        ))}
                       </select>
                     ) : (
                       <input
@@ -257,7 +321,7 @@ export default function Simulator() {
                           <DeltaBadge value={(r.delta?.probability_change_pct || 0)} invert={true} />
                         </td>
                         <td style={{ padding: '8px 12px', color: C.emerald }}>
-                          ${(r.delta?.revenue_at_risk_saved || 0).toFixed(0)}
+                          {format(r.delta?.revenue_at_risk_saved || 0, 0)}
                         </td>
                         <td style={{ padding: '8px 12px' }}>
                           {r.delta?.risk_level_changed
@@ -281,7 +345,7 @@ export default function Simulator() {
                 <ProbMeter probability={origProb} label="Churn Probability" color={origProb >= 0.7 ? C.rose : origProb >= 0.4 ? C.amber : C.emerald} />
                 <div style={{ marginTop: 12 }}>
                   <div style={{ color: '#e2e8f0', fontWeight: 700 }}>{result.original?.risk_level} Risk</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>CLV: ${(result.original?.clv?.risk_adjusted_clv || 0).toFixed(0)}</div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>CLV: {format(result.original?.clv?.risk_adjusted_clv || 0, 0)}</div>
                 </div>
               </div>
 
@@ -296,13 +360,13 @@ export default function Simulator() {
                 )}
                 {delta.clv_impact !== undefined && (
                   <div style={{ textAlign: 'center' }}>
-                    <DeltaBadge value={delta.clv_impact} unit="$" />
+                    <DeltaBadge value={delta.clv_impact * currentCurrency.rate} unit={currentCurrency.symbol} />
                     <p style={{ color: '#64748b', fontSize: '0.72rem', margin: '4px 0 0' }}>CLV impact</p>
                   </div>
                 )}
                 {delta.revenue_at_risk_saved !== undefined && delta.revenue_at_risk_saved > 0 && (
                   <div style={{ textAlign: 'center', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 12, padding: '8px 16px' }}>
-                    <div style={{ color: C.emerald, fontWeight: 800, fontSize: '1.1rem' }}>${delta.revenue_at_risk_saved.toFixed(0)}</div>
+                    <div style={{ color: C.emerald, fontWeight: 800, fontSize: '1.1rem' }}>{format(delta.revenue_at_risk_saved, 0)}</div>
                     <div style={{ color: '#64748b', fontSize: '0.7rem' }}>Annual revenue saved</div>
                   </div>
                 )}
@@ -314,7 +378,7 @@ export default function Simulator() {
                 <ProbMeter probability={modProb} label="Churn Probability" color={modProb >= 0.7 ? C.rose : modProb >= 0.4 ? C.amber : C.emerald} />
                 <div style={{ marginTop: 12 }}>
                   <div style={{ color: '#e2e8f0', fontWeight: 700 }}>{result.modified?.risk_level} Risk</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>CLV: ${(result.modified?.clv?.risk_adjusted_clv || 0).toFixed(0)}</div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>CLV: {format(result.modified?.clv?.risk_adjusted_clv || 0, 0)}</div>
                 </div>
                 {delta.risk_level_changed && (
                   <div style={{ marginTop: 8, color: C.emerald, fontSize: '0.8rem', fontWeight: 700 }}>

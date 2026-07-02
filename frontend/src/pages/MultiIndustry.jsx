@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { industryAPI } from '../services/api';
+import { useCurrency } from '../context/CurrencyContext';
+import { Gem, DollarSign, AlertTriangle, BarChart3, Trophy, Target, Flame, AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend,
@@ -18,6 +21,11 @@ const C = {
   violet: '#8b5cf6', rose: '#f43f5e', emerald: '#10b981', amber: '#f59e0b',
   cyan: '#06b6d4', slate: '#64748b', indigo: '#6366f1', pink: '#ec4899',
 };
+
+const CURRENCY_KEYS = [
+  'monthly_charges', 'total_charges', 'balance', 'estimated_salary', 'avg_order_value',
+  'monthly_income', 'annual_income', 'lifetime_spending', 'outstanding_bills', 'copayment_amount', 'avg_tx_value'
+];
 
 // ── Industry icon components (no emojis) ──────────────────────────────────────
 const IndustryIcon = ({ industry, size = 28, color }) => {
@@ -59,152 +67,326 @@ const INDUSTRIES = [
 ];
 
 const STATIC_DEFAULTS = {
-  telecom: {
-    gender: 'Male', senior_citizen: 0, partner: 'No', dependents: 'No',
-    tenure: 12, internet_service: 'Fiber optic', phone_service: 'Yes',
-    multiple_lines: 'No', online_security: 'No', online_backup: 'No',
-    device_protection: 'No', tech_support: 'No', streaming_tv: 'No',
-    streaming_movies: 'No', contract: 'Month-to-month', paperless_billing: 'Yes',
-    payment_method: 'Electronic check', monthly_charges: 70.35, total_charges: 844.20,
-  },
   banking: {
-    age: 38, gender: 'Male', geography: 'France', tenure: 3,
-    credit_score: 650, balance: 65000, estimated_salary: 72000,
-    num_products: 1, has_credit_card: 1, is_active_member: 1,
+    age: 38, gender: 'Male', geography: 'France', marital_status: 'Single', occupation: 'Salaried', annual_income: 60000,
+    tenure: 3, account_type: 'Savings', num_accounts: 2, has_credit_card: 'Yes', is_active_member: 'Yes',
+    credit_score: 720, balance: 350000, estimated_salary: 72000, monthly_income: 5000, avg_monthly_tx: 25, avg_tx_value: 150,
+    num_products: 2, mobile_banking_usage: 'Medium', internet_banking_usage: 'Medium', atm_usage_frequency: 'Weekly',
+    days_since_last_login: 4, complaints_last_year: 0, customer_support_calls: 1, loan_status: 'No Loan', emi_delay_count: 0
+  },
+  telecom: {
+    age: 42, gender: 'Male', region: 'North', contract: 'Month-to-month',
+    tenure: 12, monthly_charges: 70.00, total_charges: 840.00, payment_method: 'Electronic check', paperless_billing: 'Yes',
+    internet_service: 'Fiber optic', phone_service: 'Yes', multiple_lines: 'No', streaming_tv: 'No', streaming_movies: 'No', device_protection: 'No', online_security: 'No', tech_support: 'No',
+    monthly_data_usage: 28, voice_minutes: 450, sms_usage: 120, international_calls: 15, roaming_usage: 'None',
+    customer_service_calls: 1, num_complaints: 0, missed_payments: 0, contract_renewal_status: 'Auto-renew', days_since_last_recharge: 10, payment_delay_count: 0
   },
   ecommerce: {
-    days_since_last_purchase: 45, total_orders: 12, avg_order_value: 68.5,
-    returns_count: 2, email_opens_rate: 28.5, cart_abandonment_rate: 55.0,
-    support_tickets: 2, loyalty_tier: 'Silver', subscription_type: 'Basic',
-    tenure_months: 14,
+    age: 34, gender: 'Female', location: 'Urban', loyalty_tier: 'Silver',
+    days_since_last_purchase: 45, total_orders: 18, avg_order_value: 68.50, lifetime_spending: 1230.00, products_purchased: 35,
+    cart_abandonment_rate: 42, wishlist_items: 5, browsing_sessions: 24, avg_session_duration: 18, product_views: 120,
+    email_opens_rate: 28.5, push_notification_click_rate: 15.2, coupon_usage: 'Occasional', loyalty_points: 1250, referral_count: 1,
+    returns_count: 2, refund_count: 1, complaints: 0, support_tickets: 2, avg_review_rating: 4.2,
+    subscription_type: 'Free', subscription_age_months: 14, auto_renewal: 'Yes'
   },
   healthcare: {
     age: 45, gender: 'Female', insurance_type: 'Private', payment_type: 'Insurance',
-    days_since_last_visit: 90, appointment_no_shows: 2, specialist_visits: 3,
-    prescription_count: 2, chronic_conditions: 1, patient_satisfaction: 7,
-  },
+    days_since_last_visit: 90, num_visits: 4, missed_appointments: 1, cancellation_count: 2,
+    chronic_conditions: 1, risk_category: 'Low', prescription_count: 2, specialists_visited: 1,
+    telemedicine_usage: 'Occasional', patient_portal_login: 'Monthly', health_app_usage: 'Inactive User', reminder_response_rate: 85,
+    patient_satisfaction: 8, complaints: 0, waiting_time: 25, doctor_rating: 4.5,
+    outstanding_bills: 150, claims_rejected: 0, copayment_amount: 30
+  }
 };
 
 const TEMPLATES = {
-  telecom: {
-    high_risk: { gender: 'Male', senior_citizen: 1, partner: 'No', dependents: 'No', tenure: 2, internet_service: 'Fiber optic', phone_service: 'Yes', multiple_lines: 'Yes', online_security: 'No', online_backup: 'No', device_protection: 'No', tech_support: 'No', streaming_tv: 'No', streaming_movies: 'No', contract: 'Month-to-month', paperless_billing: 'Yes', payment_method: 'Electronic check', monthly_charges: 98.5, total_charges: 197.0 },
-    medium_risk: { gender: 'Female', senior_citizen: 0, partner: 'Yes', dependents: 'No', tenure: 18, internet_service: 'DSL', phone_service: 'Yes', multiple_lines: 'No', online_security: 'Yes', online_backup: 'No', device_protection: 'No', tech_support: 'No', streaming_tv: 'Yes', streaming_movies: 'No', contract: 'Month-to-month', paperless_billing: 'Yes', payment_method: 'Mailed check', monthly_charges: 59.9, total_charges: 1078.2 },
-    low_risk: { gender: 'Female', senior_citizen: 0, partner: 'Yes', dependents: 'Yes', tenure: 48, internet_service: 'DSL', phone_service: 'Yes', multiple_lines: 'No', online_security: 'Yes', online_backup: 'Yes', device_protection: 'Yes', tech_support: 'Yes', streaming_tv: 'No', streaming_movies: 'No', contract: 'Two year', paperless_billing: 'No', payment_method: 'Bank transfer (automatic)', monthly_charges: 45.5, total_charges: 2184.0 },
-  },
   banking: {
-    high_risk: { age: 52, gender: 'Female', geography: 'Germany', tenure: 1, credit_score: 420, balance: 120000, estimated_salary: 48000, num_products: 1, has_credit_card: 0, is_active_member: 0 },
-    medium_risk: { age: 40, gender: 'Male', geography: 'Spain', tenure: 4, credit_score: 590, balance: 80000, estimated_salary: 65000, num_products: 2, has_credit_card: 1, is_active_member: 0 },
-    low_risk: { age: 30, gender: 'Female', geography: 'France', tenure: 8, credit_score: 750, balance: 30000, estimated_salary: 95000, num_products: 2, has_credit_card: 1, is_active_member: 1 },
+    high_risk: {
+      age: 52, gender: 'Female', geography: 'Germany', marital_status: 'Single', occupation: 'Unemployed', annual_income: 18000,
+      tenure: 1, account_type: 'Checking', num_accounts: 3, has_credit_card: 'No', is_active_member: 'No',
+      credit_score: 420, balance: 120000, estimated_salary: 48000, monthly_income: 1500, avg_monthly_tx: 5, avg_tx_value: 20,
+      num_products: 1, mobile_banking_usage: 'Low', internet_banking_usage: 'Low', atm_usage_frequency: 'Rarely',
+      days_since_last_login: 45, complaints_last_year: 4, customer_support_calls: 8, loan_status: 'Defaulted', emi_delay_count: 5
+    },
+    medium_risk: {
+      age: 40, gender: 'Male', geography: 'Spain', marital_status: 'Married', occupation: 'Self-employed', annual_income: 45000,
+      tenure: 4, account_type: 'Savings', num_accounts: 2, has_credit_card: 'Yes', is_active_member: 'No',
+      credit_score: 590, balance: 80000, estimated_salary: 65000, monthly_income: 3800, avg_monthly_tx: 15, avg_tx_value: 80,
+      num_products: 2, mobile_banking_usage: 'Medium', internet_banking_usage: 'Medium', atm_usage_frequency: 'Weekly',
+      days_since_last_login: 15, complaints_last_year: 1, customer_support_calls: 3, loan_status: 'Active Loan', emi_delay_count: 1
+    },
+    low_risk: {
+      age: 30, gender: 'Female', geography: 'France', marital_status: 'Married', occupation: 'Salaried', annual_income: 95000,
+      tenure: 8, account_type: 'Savings', num_accounts: 1, has_credit_card: 'Yes', is_active_member: 'Yes',
+      credit_score: 750, balance: 30000, estimated_salary: 95000, monthly_income: 8000, avg_monthly_tx: 45, avg_tx_value: 300,
+      num_products: 2, mobile_banking_usage: 'High', internet_banking_usage: 'High', atm_usage_frequency: 'Weekly',
+      days_since_last_login: 2, complaints_last_year: 0, customer_support_calls: 0, loan_status: 'No Loan', emi_delay_count: 0
+    }
+  },
+  telecom: {
+    high_risk: {
+      age: 68, gender: 'Male', region: 'South', contract: 'Month-to-month',
+      tenure: 2, monthly_charges: 95.80, total_charges: 191.60, payment_method: 'Electronic check', paperless_billing: 'Yes',
+      internet_service: 'Fiber optic', phone_service: 'Yes', multiple_lines: 'Yes', streaming_tv: 'Yes', streaming_movies: 'Yes', device_protection: 'No', online_security: 'No', tech_support: 'No',
+      monthly_data_usage: 120, voice_minutes: 1800, sms_usage: 800, international_calls: 0, roaming_usage: 'Domestic',
+      customer_service_calls: 6, num_complaints: 3, missed_payments: 2, contract_renewal_status: 'Pending', days_since_last_recharge: 45, payment_delay_count: 3
+    },
+    medium_risk: {
+      age: 45, gender: 'Female', region: 'East', contract: 'One year',
+      tenure: 18, monthly_charges: 59.90, total_charges: 1078.20, payment_method: 'Mailed check', paperless_billing: 'No',
+      internet_service: 'DSL', phone_service: 'Yes', multiple_lines: 'No', streaming_tv: 'No', streaming_movies: 'No', device_protection: 'Yes', online_security: 'No', tech_support: 'Yes',
+      monthly_data_usage: 15, voice_minutes: 600, sms_usage: 100, international_calls: 5, roaming_usage: 'None',
+      customer_service_calls: 2, num_complaints: 1, missed_payments: 0, contract_renewal_status: 'Renewed', days_since_last_recharge: 12, payment_delay_count: 0
+    },
+    low_risk: {
+      age: 35, gender: 'Female', region: 'North', contract: 'Two year',
+      tenure: 48, monthly_charges: 45.50, total_charges: 2184.00, payment_method: 'Credit card (automatic)', paperless_billing: 'No',
+      internet_service: 'DSL', phone_service: 'Yes', multiple_lines: 'No', streaming_tv: 'No', streaming_movies: 'No', device_protection: 'Yes', online_security: 'Yes', tech_support: 'Yes',
+      monthly_data_usage: 5, voice_minutes: 300, sms_usage: 50, international_calls: 2, roaming_usage: 'None',
+      customer_service_calls: 0, num_complaints: 0, missed_payments: 0, contract_renewal_status: 'Renewed', days_since_last_recharge: 3, payment_delay_count: 0
+    }
   },
   ecommerce: {
-    high_risk: { days_since_last_purchase: 180, total_orders: 3, avg_order_value: 22.0, returns_count: 5, email_opens_rate: 5.0, cart_abandonment_rate: 85.0, support_tickets: 8, loyalty_tier: 'Bronze', subscription_type: 'Free', tenure_months: 5 },
-    medium_risk: { days_since_last_purchase: 60, total_orders: 15, avg_order_value: 55.0, returns_count: 2, email_opens_rate: 20.0, cart_abandonment_rate: 60.0, support_tickets: 3, loyalty_tier: 'Silver', subscription_type: 'Basic', tenure_months: 18 },
-    low_risk: { days_since_last_purchase: 8, total_orders: 85, avg_order_value: 120.0, returns_count: 1, email_opens_rate: 55.0, cart_abandonment_rate: 20.0, support_tickets: 0, loyalty_tier: 'Platinum', subscription_type: 'Premium', tenure_months: 48 },
+    high_risk: {
+      age: 22, gender: 'Male', location: 'Rural', loyalty_tier: 'Bronze',
+      days_since_last_purchase: 180, total_orders: 2, avg_order_value: 15.00, lifetime_spending: 30.00, products_purchased: 4,
+      cart_abandonment_rate: 85, wishlist_items: 2, browsing_sessions: 6, avg_session_duration: 3, product_views: 12,
+      email_opens_rate: 5, push_notification_click_rate: 2, coupon_usage: 'Never', loyalty_points: 50, referral_count: 0,
+      returns_count: 8, refund_count: 5, complaints: 4, support_tickets: 9, avg_review_rating: 1.5,
+      subscription_type: 'Free', subscription_age_months: 2, auto_renewal: 'No'
+    },
+    medium_risk: {
+      age: 38, gender: 'Female', location: 'Suburban', loyalty_tier: 'Silver',
+      days_since_last_purchase: 60, total_orders: 12, avg_order_value: 52.00, lifetime_spending: 624.00, products_purchased: 20,
+      cart_abandonment_rate: 55, wishlist_items: 6, browsing_sessions: 18, avg_session_duration: 12, product_views: 65,
+      email_opens_rate: 22, push_notification_click_rate: 10, coupon_usage: 'Occasional', loyalty_points: 450, referral_count: 1,
+      returns_count: 2, refund_count: 1, complaints: 1, support_tickets: 3, avg_review_rating: 3.8,
+      subscription_type: 'Monthly Pass', subscription_age_months: 10, auto_renewal: 'Yes'
+    },
+    low_risk: {
+      age: 29, gender: 'Female', location: 'Urban', loyalty_tier: 'Platinum',
+      days_since_last_purchase: 5, total_orders: 85, avg_order_value: 110.00, lifetime_spending: 9350.00, products_purchased: 180,
+      cart_abandonment_rate: 15, wishlist_items: 12, browsing_sessions: 48, avg_session_duration: 25, product_views: 450,
+      email_opens_rate: 65, push_notification_click_rate: 32, coupon_usage: 'Frequent', loyalty_points: 12500, referral_count: 4,
+      returns_count: 0, refund_count: 0, complaints: 0, support_tickets: 0, avg_review_rating: 4.8,
+      subscription_type: 'Annual Membership', subscription_age_months: 24, auto_renewal: 'Yes'
+    }
   },
   healthcare: {
-    high_risk: { age: 28, gender: 'Male', insurance_type: 'Uninsured', payment_type: 'Self-pay', days_since_last_visit: 400, appointment_no_shows: 8, specialist_visits: 0, prescription_count: 0, chronic_conditions: 0, patient_satisfaction: 3 },
-    medium_risk: { age: 52, gender: 'Female', insurance_type: 'Medicare', payment_type: 'Insurance', days_since_last_visit: 150, appointment_no_shows: 3, specialist_visits: 2, prescription_count: 3, chronic_conditions: 2, patient_satisfaction: 6 },
-    low_risk: { age: 62, gender: 'Male', insurance_type: 'Private', payment_type: 'Insurance', days_since_last_visit: 20, appointment_no_shows: 0, specialist_visits: 6, prescription_count: 5, chronic_conditions: 3, patient_satisfaction: 9 },
-  },
+    high_risk: {
+      age: 28, gender: 'Male', insurance_type: 'None', payment_type: 'Self-pay',
+      days_since_last_visit: 400, num_visits: 1, missed_appointments: 8, cancellation_count: 6,
+      chronic_conditions: 0, risk_category: 'High', prescription_count: 0, specialists_visited: 0,
+      telemedicine_usage: 'Never', patient_portal_login: 'Never', health_app_usage: 'Not Registered', reminder_response_rate: 12,
+      patient_satisfaction: 3, complaints: 3, waiting_time: 75, doctor_rating: 2.1,
+      outstanding_bills: 950, claims_rejected: 4, copayment_amount: 100
+    },
+    medium_risk: {
+      age: 52, gender: 'Female', insurance_type: 'Medicare', payment_type: 'Insurance',
+      days_since_last_visit: 150, num_visits: 5, missed_appointments: 3, cancellation_count: 2,
+      chronic_conditions: 2, risk_category: 'Medium', prescription_count: 3, specialists_visited: 2,
+      telemedicine_usage: 'Occasional', patient_portal_login: 'Monthly', health_app_usage: 'Inactive User', reminder_response_rate: 55,
+      patient_satisfaction: 6, complaints: 1, waiting_time: 35, doctor_rating: 3.8,
+      outstanding_bills: 240, claims_rejected: 1, copayment_amount: 40
+    },
+    low_risk: {
+      age: 65, gender: 'Female', insurance_type: 'Private', payment_type: 'Insurance',
+      days_since_last_visit: 15, num_visits: 12, missed_appointments: 0, cancellation_count: 0,
+      chronic_conditions: 4, risk_category: 'Low', prescription_count: 6, specialists_visited: 3,
+      telemedicine_usage: 'Frequent', patient_portal_login: 'Weekly', health_app_usage: 'Active User', reminder_response_rate: 92,
+      patient_satisfaction: 9, complaints: 0, waiting_time: 15, doctor_rating: 4.8,
+      outstanding_bills: 0, claims_rejected: 0, copayment_amount: 15
+    }
+  }
 };
 
 const SECTION_ICONS = {
-  'Customer Demographics': <HiOutlineUserGroup style={{ fontSize: 16 }} />,
-  'Services': <HiOutlineGlobe style={{ fontSize: 16 }} />,
-  'Account & Billing': <HiOutlineCreditCard style={{ fontSize: 16 }} />,
+  // Telecom
+  'Customer Information': <HiOutlineUserGroup style={{ fontSize: 16 }} />,
+  'Billing Information': <HiOutlineCreditCard style={{ fontSize: 16 }} />,
+  'Subscription Details': <HiOutlineGlobe style={{ fontSize: 16 }} />,
+  'Usage Statistics': <HiOutlineChartBar style={{ fontSize: 16 }} />,
+  'Customer Behaviour': <HiOutlineChartBar style={{ fontSize: 16 }} />,
+
+  // Banking
   'Customer Profile': <HiOutlineUserGroup style={{ fontSize: 16 }} />,
+  'Relationship Details': <HiOutlineUserGroup style={{ fontSize: 16 }} />,
   'Financial Details': <HiOutlineCash style={{ fontSize: 16 }} />,
-  'Account Behavior': <HiOutlineChartBar style={{ fontSize: 16 }} />,
-  'Purchase Behavior': <HiOutlineShoppingCart style={{ fontSize: 16 }} />,
-  'Engagement Metrics': <HiOutlineMail style={{ fontSize: 16 }} />,
-  'Account & Subscription': <HiOutlineCreditCard style={{ fontSize: 16 }} />,
+  'Product Usage': <HiOutlineChartBar style={{ fontSize: 16 }} />,
+
+  // E-commerce
+  'Purchase Behaviour': <HiOutlineShoppingCart style={{ fontSize: 16 }} />,
+  'Shopping Behaviour': <HiOutlineShoppingCart style={{ fontSize: 16 }} />,
+  'Customer Engagement': <HiOutlineMail style={{ fontSize: 16 }} />,
+  'Support & Returns': <HiOutlineDocumentReport style={{ fontSize: 16 }} />,
+  'Subscription': <HiOutlineCalendar style={{ fontSize: 16 }} />,
+
+  // Healthcare
   'Patient Profile': <HiOutlineUserGroup style={{ fontSize: 16 }} />,
-  'Visit History': <HiOutlineCalendar style={{ fontSize: 16 }} />,
-  'Clinical & Satisfaction': <HiOutlineHeart style={{ fontSize: 16 }} />,
+  'Appointment History': <HiOutlineCalendar style={{ fontSize: 16 }} />,
+  'Clinical Information': <HiOutlineHeart style={{ fontSize: 16 }} />,
+  'Patient Engagement': <HiOutlineMail style={{ fontSize: 16 }} />,
+  'Satisfaction Metrics': <HiOutlineHeart style={{ fontSize: 16 }} />,
+  'Billing & Insurance': <HiOutlineCreditCard style={{ fontSize: 16 }} />,
 };
 
 const FIELD_SCHEMAS = {
-  telecom: [
-    { section: 'Customer Demographics', fields: [
-      { key: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female'] },
-      { key: 'senior_citizen', label: 'Senior Citizen', type: 'select', options: [0, 1], labels: ['No', 'Yes'] },
-      { key: 'partner', label: 'Partner', type: 'select', options: ['Yes', 'No'] },
-      { key: 'dependents', label: 'Dependents', type: 'select', options: ['Yes', 'No'] },
-    ]},
-    { section: 'Services', fields: [
-      { key: 'tenure', label: 'Tenure (months)', type: 'number', min: 0, max: 72 },
-      { key: 'internet_service', label: 'Internet Service', type: 'select', options: ['DSL', 'Fiber optic', 'No'] },
-      { key: 'phone_service', label: 'Phone Service', type: 'select', options: ['Yes', 'No'] },
-      { key: 'multiple_lines', label: 'Multiple Lines', type: 'select', options: ['Yes', 'No', 'No phone service'] },
-      { key: 'online_security', label: 'Online Security', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-      { key: 'online_backup', label: 'Online Backup', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-      { key: 'device_protection', label: 'Device Protection', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-      { key: 'tech_support', label: 'Tech Support', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-      { key: 'streaming_tv', label: 'Streaming TV', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-      { key: 'streaming_movies', label: 'Streaming Movies', type: 'select', options: ['Yes', 'No', 'No internet service'] },
-    ]},
-    { section: 'Account & Billing', fields: [
-      { key: 'contract', label: 'Contract', type: 'select', options: ['Month-to-month', 'One year', 'Two year'] },
-      { key: 'paperless_billing', label: 'Paperless Billing', type: 'select', options: ['Yes', 'No'] },
-      { key: 'payment_method', label: 'Payment Method', type: 'select', options: ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'] },
-      { key: 'monthly_charges', label: 'Monthly Charges ($)', type: 'number', min: 0, max: 200, step: 0.01 },
-      { key: 'total_charges', label: 'Total Charges ($)', type: 'number', min: 0, max: 10000, step: 0.01 },
-    ]},
-  ],
   banking: [
     { section: 'Customer Profile', fields: [
-      { key: 'age', label: 'Age', type: 'number', min: 18, max: 95 },
-      { key: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female'] },
-      { key: 'geography', label: 'Geography', type: 'select', options: ['France', 'Germany', 'Spain'] },
-      { key: 'tenure', label: 'Tenure (years)', type: 'number', min: 0, max: 20 },
+      { key: 'age', label: 'Age', type: 'slider', min: 18, max: 95 },
+      { key: 'gender', label: 'Gender', type: 'radio', options: ['Male', 'Female'] },
+      { key: 'geography', label: 'Geography', type: 'radio', options: ['France', 'Germany', 'Spain'] },
+      { key: 'marital_status', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Divorced'] },
+      { key: 'occupation', label: 'Occupation', type: 'select', options: ['Salaried', 'Self-employed', 'Retired', 'Student', 'Unemployed'] },
+      { key: 'annual_income', label: 'Annual Income ($)', type: 'number', min: 0, max: 1000000 }
+    ]},
+    { section: 'Relationship Details', fields: [
+      { key: 'tenure', label: 'Customer Tenure (Years)', type: 'number', min: 0, max: 30 },
+      { key: 'account_type', label: 'Account Type', type: 'select', options: ['Savings', 'Checking', 'Money Market', 'Certificate of Deposit'] },
+      { key: 'num_accounts', label: 'Number of Accounts', type: 'number', min: 1, max: 5 },
+      { key: 'has_credit_card', label: 'Has Credit Card', type: 'toggle', options: ['Yes', 'No'] },
+      { key: 'is_active_member', label: 'Active Member', type: 'toggle', options: ['Yes', 'No'] }
     ]},
     { section: 'Financial Details', fields: [
-      { key: 'credit_score', label: 'Credit Score', type: 'number', min: 300, max: 850 },
-      { key: 'balance', label: 'Account Balance ($)', type: 'number', min: 0, max: 300000, step: 100 },
-      { key: 'estimated_salary', label: 'Estimated Salary ($)', type: 'number', min: 10000, max: 300000, step: 1000 },
-      { key: 'num_products', label: 'Number of Products', type: 'select', options: [1, 2, 3, 4], labels: ['1', '2', '3', '4'] },
+      { key: 'credit_score', label: 'Credit Score', type: 'number', min: 300, max: 900 },
+      { key: 'balance', label: 'Account Balance ($)', type: 'number', min: 0, max: 1000000 },
+      { key: 'estimated_salary', label: 'Estimated Salary ($)', type: 'number', min: 0, max: 1000000 },
+      { key: 'monthly_income', label: 'Monthly Income ($)', type: 'number', min: 0, max: 100000 },
+      { key: 'avg_monthly_tx', label: 'Average Monthly Transactions', type: 'number', min: 0, max: 200 },
+      { key: 'avg_tx_value', label: 'Average Transaction Value ($)', type: 'number', min: 0, max: 10000 }
     ]},
-    { section: 'Account Behavior', fields: [
-      { key: 'has_credit_card', label: 'Has Credit Card', type: 'select', options: [1, 0], labels: ['Yes', 'No'] },
-      { key: 'is_active_member', label: 'Active Member', type: 'select', options: [1, 0], labels: ['Yes', 'No'] },
+    { section: 'Product Usage', fields: [
+      { key: 'num_products', label: 'Number of Products', type: 'number', min: 1, max: 5 },
+      { key: 'mobile_banking_usage', label: 'Mobile Banking Usage', type: 'radio', options: ['High', 'Medium', 'Low'] },
+      { key: 'internet_banking_usage', label: 'Internet Banking Usage', type: 'radio', options: ['High', 'Medium', 'Low'] },
+      { key: 'atm_usage_frequency', label: 'ATM Usage Frequency', type: 'select', options: ['Daily', 'Weekly', 'Monthly', 'Rarely'] }
     ]},
+    { section: 'Customer Behaviour', fields: [
+      { key: 'days_since_last_login', label: 'Days Since Last Login', type: 'number', min: 0, max: 365 },
+      { key: 'complaints_last_year', label: 'Complaints Last Year', type: 'number', min: 0, max: 10 },
+      { key: 'customer_support_calls', label: 'Customer Support Calls', type: 'number', min: 0, max: 20 },
+      { key: 'loan_status', label: 'Loan Status', type: 'select', options: ['No Loan', 'Active Loan', 'Defaulted'] },
+      { key: 'emi_delay_count', label: 'EMI Payment Delay Count', type: 'number', min: 0, max: 12 }
+    ]}
+  ],
+  telecom: [
+    { section: 'Customer Information', fields: [
+      { key: 'age', label: 'Age', type: 'slider', min: 18, max: 100 },
+      { key: 'gender', label: 'Gender', type: 'radio', options: ['Male', 'Female'] },
+      { key: 'region', label: 'Region', type: 'radio', options: ['North', 'South', 'East', 'West'] },
+      { key: 'contract', label: 'Contract Type', type: 'select', options: ['Month-to-month', 'One year', 'Two year'] }
+    ]},
+    { section: 'Billing Information', fields: [
+      { key: 'tenure', label: 'Customer Tenure (Months)', type: 'number', min: 0, max: 72 },
+      { key: 'monthly_charges', label: 'Monthly Charges ($)', type: 'number', min: 0, max: 250 },
+      { key: 'total_charges', label: 'Total Charges ($)', type: 'number', min: 0, max: 15000 },
+      { key: 'payment_method', label: 'Payment Method', type: 'select', options: ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'] },
+      { key: 'paperless_billing', label: 'Paperless Billing', type: 'toggle', options: ['Yes', 'No'] }
+    ]},
+    { section: 'Subscription Details', fields: [
+      { key: 'internet_service', label: 'Internet Service', type: 'select', options: ['DSL', 'Fiber optic', 'No'] },
+      { key: 'phone_service', label: 'Phone Service', type: 'toggle', options: ['Yes', 'No'] },
+      { key: 'multiple_lines', label: 'Multiple Lines', type: 'select', options: ['Yes', 'No', 'No phone service'] },
+      { key: 'streaming_tv', label: 'Streaming TV', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+      { key: 'streaming_movies', label: 'Streaming Movies', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+      { key: 'device_protection', label: 'Device Protection', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+      { key: 'online_security', label: 'Online Security', type: 'select', options: ['Yes', 'No', 'No internet service'] },
+      { key: 'tech_support', label: 'Tech Support', type: 'select', options: ['Yes', 'No', 'No internet service'] }
+    ]},
+    { section: 'Usage Statistics', fields: [
+      { key: 'monthly_data_usage', label: 'Monthly Data Usage (GB)', type: 'number', min: 0, max: 1000 },
+      { key: 'voice_minutes', label: 'Voice Minutes', type: 'number', min: 0, max: 5000 },
+      { key: 'sms_usage', label: 'SMS Usage', type: 'number', min: 0, max: 2000 },
+      { key: 'international_calls', label: 'International Calls', type: 'number', min: 0, max: 500 },
+      { key: 'roaming_usage', label: 'Roaming Usage', type: 'select', options: ['None', 'Domestic', 'International'] }
+    ]},
+    { section: 'Customer Behaviour', fields: [
+      { key: 'customer_service_calls', label: 'Customer Service Calls', type: 'number', min: 0, max: 20 },
+      { key: 'num_complaints', label: 'Number of Complaints', type: 'number', min: 0, max: 10 },
+      { key: 'missed_payments', label: 'Missed Payments', type: 'number', min: 0, max: 12 },
+      { key: 'contract_renewal_status', label: 'Contract Renewal Status', type: 'select', options: ['Renewed', 'Pending', 'Auto-renew'] },
+      { key: 'days_since_last_recharge', label: 'Days Since Last Recharge', type: 'number', min: 0, max: 180 },
+      { key: 'payment_delay_count', label: 'Payment Delay Count', type: 'number', min: 0, max: 12 }
+    ]}
   ],
   ecommerce: [
-    { section: 'Purchase Behavior', fields: [
+    { section: 'Customer Profile', fields: [
+      { key: 'age', label: 'Age', type: 'slider', min: 18, max: 90 },
+      { key: 'gender', label: 'Gender', type: 'radio', options: ['Male', 'Female'] },
+      { key: 'location', label: 'Location', type: 'radio', options: ['Urban', 'Suburban', 'Rural'] },
+      { key: 'loyalty_tier', label: 'Membership Tier', type: 'select', options: ['Bronze', 'Silver', 'Gold', 'Platinum'] }
+    ]},
+    { section: 'Purchase Behaviour', fields: [
       { key: 'days_since_last_purchase', label: 'Days Since Last Purchase', type: 'number', min: 0, max: 365 },
-      { key: 'total_orders', label: 'Total Orders (Lifetime)', type: 'number', min: 1, max: 500 },
-      { key: 'avg_order_value', label: 'Avg Order Value ($)', type: 'number', min: 5, max: 2000, step: 0.01 },
-      { key: 'returns_count', label: 'Returns Count', type: 'number', min: 0, max: 50 },
+      { key: 'total_orders', label: 'Total Orders', type: 'number', min: 1, max: 500 },
+      { key: 'avg_order_value', label: 'Average Order Value ($)', type: 'number', min: 0, max: 5000 },
+      { key: 'lifetime_spending', label: 'Lifetime Spending ($)', type: 'number', min: 0, max: 100000 },
+      { key: 'products_purchased', label: 'Products Purchased', type: 'number', min: 1, max: 2000 }
     ]},
-    { section: 'Engagement Metrics', fields: [
-      { key: 'email_opens_rate', label: 'Email Open Rate (%)', type: 'number', min: 0, max: 100, step: 0.1 },
-      { key: 'cart_abandonment_rate', label: 'Cart Abandonment Rate (%)', type: 'number', min: 0, max: 100, step: 0.1 },
-      { key: 'support_tickets', label: 'Support Tickets (last 6mo)', type: 'number', min: 0, max: 20 },
+    { section: 'Shopping Behaviour', fields: [
+      { key: 'cart_abandonment_rate', label: 'Cart Abandonment Rate (%)', type: 'slider', min: 0, max: 100 },
+      { key: 'wishlist_items', label: 'Wishlist Items', type: 'number', min: 0, max: 100 },
+      { key: 'browsing_sessions', label: 'Browsing Sessions', type: 'number', min: 0, max: 100 },
+      { key: 'avg_session_duration', label: 'Average Session Duration (Minutes)', type: 'number', min: 0, max: 120 },
+      { key: 'product_views', label: 'Product Views', type: 'number', min: 0, max: 1000 }
     ]},
-    { section: 'Account & Subscription', fields: [
-      { key: 'loyalty_tier', label: 'Loyalty Tier', type: 'select', options: ['Bronze', 'Silver', 'Gold', 'Platinum'] },
-      { key: 'subscription_type', label: 'Subscription Type', type: 'select', options: ['Free', 'Basic', 'Premium', 'Enterprise'] },
-      { key: 'tenure_months', label: 'Account Age (months)', type: 'number', min: 1, max: 120 },
+    { section: 'Customer Engagement', fields: [
+      { key: 'email_opens_rate', label: 'Email Open Rate (%)', type: 'slider', min: 0, max: 100 },
+      { key: 'push_notification_click_rate', label: 'Push Notification Click Rate (%)', type: 'slider', min: 0, max: 100 },
+      { key: 'coupon_usage', label: 'Coupon Usage', type: 'select', options: ['Frequent', 'Occasional', 'Never'] },
+      { key: 'loyalty_points', label: 'Loyalty Points', type: 'number', min: 0, max: 50000 },
+      { key: 'referral_count', label: 'Referral Count', type: 'number', min: 0, max: 50 }
     ]},
+    { section: 'Support & Returns', fields: [
+      { key: 'returns_count', label: 'Return Count', type: 'number', min: 0, max: 50 },
+      { key: 'refund_count', label: 'Refund Count', type: 'number', min: 0, max: 50 },
+      { key: 'complaints', label: 'Complaints', type: 'number', min: 0, max: 10 },
+      { key: 'support_tickets', label: 'Support Tickets', type: 'number', min: 0, max: 25 },
+      { key: 'avg_review_rating', label: 'Average Review Rating', type: 'number', min: 1, max: 5, step: 0.1 }
+    ]},
+    { section: 'Subscription', fields: [
+      { key: 'subscription_type', label: 'Subscription Type', type: 'select', options: ['Free', 'Monthly Pass', 'Annual Membership'] },
+      { key: 'subscription_age_months', label: 'Subscription Age (Months)', type: 'number', min: 0, max: 120 },
+      { key: 'auto_renewal', label: 'Auto Renewal', type: 'toggle', options: ['Yes', 'No'] }
+    ]}
   ],
   healthcare: [
     { section: 'Patient Profile', fields: [
-      { key: 'age', label: 'Age', type: 'number', min: 0, max: 100 },
-      { key: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female', 'Other'] },
-      { key: 'insurance_type', label: 'Insurance Type', type: 'select', options: ['Private', 'Medicare', 'Medicaid', 'Uninsured'] },
-      { key: 'payment_type', label: 'Payment Type', type: 'select', options: ['Insurance', 'Self-pay', 'Sliding scale'] },
+      { key: 'age', label: 'Age', type: 'slider', min: 0, max: 120 },
+      { key: 'gender', label: 'Gender', type: 'radio', options: ['Male', 'Female', 'Other'] },
+      { key: 'insurance_type', label: 'Insurance Type', type: 'select', options: ['Private', 'Medicare', 'Medicaid', 'None'] },
+      { key: 'payment_type', label: 'Payment Type', type: 'select', options: ['Insurance', 'Self-pay', 'Government assistance'] }
     ]},
-    { section: 'Visit History', fields: [
+    { section: 'Appointment History', fields: [
       { key: 'days_since_last_visit', label: 'Days Since Last Visit', type: 'number', min: 0, max: 730 },
-      { key: 'appointment_no_shows', label: 'No-Shows (last 12mo)', type: 'number', min: 0, max: 20 },
-      { key: 'specialist_visits', label: 'Specialist Visits (last 12mo)', type: 'number', min: 0, max: 30 },
-      { key: 'prescription_count', label: 'Active Prescriptions', type: 'number', min: 0, max: 20 },
+      { key: 'num_visits', label: 'Number of Visits', type: 'number', min: 1, max: 100 },
+      { key: 'missed_appointments', label: 'Missed Appointments', type: 'number', min: 0, max: 50 },
+      { key: 'cancellation_count', label: 'Appointment Cancellation Count', type: 'number', min: 0, max: 50 }
     ]},
-    { section: 'Clinical & Satisfaction', fields: [
+    { section: 'Clinical Information', fields: [
       { key: 'chronic_conditions', label: 'Chronic Conditions', type: 'number', min: 0, max: 10 },
-      { key: 'patient_satisfaction', label: 'Satisfaction Score (1–10)', type: 'number', min: 1, max: 10 },
+      { key: 'risk_category', label: 'Risk Category', type: 'radio', options: ['Low', 'Medium', 'High'] },
+      { key: 'prescription_count', label: 'Active Prescriptions', type: 'number', min: 0, max: 30 },
+      { key: 'specialists_visited', label: 'Number of Specialists Visited', type: 'number', min: 0, max: 15 }
     ]},
-  ],
+    { section: 'Patient Engagement', fields: [
+      { key: 'telemedicine_usage', label: 'Telemedicine Usage', type: 'select', options: ['Frequent', 'Occasional', 'Never'] },
+      { key: 'patient_portal_login', label: 'Patient Portal Login Frequency', type: 'select', options: ['Daily', 'Weekly', 'Monthly', 'Never'] },
+      { key: 'health_app_usage', label: 'Health App Usage', type: 'select', options: ['Active User', 'Inactive User', 'Not Registered'] },
+      { key: 'reminder_response_rate', label: 'Reminder Response Rate (%)', type: 'slider', min: 0, max: 100 }
+    ]},
+    { section: 'Satisfaction Metrics', fields: [
+      { key: 'patient_satisfaction', label: 'Patient Satisfaction Score (1–10)', type: 'slider', min: 1, max: 10 },
+      { key: 'complaints', label: 'Complaints', type: 'number', min: 0, max: 10 },
+      { key: 'waiting_time', label: 'Average Waiting Time (Minutes)', type: 'number', min: 0, max: 180 },
+      { key: 'doctor_rating', label: 'Doctor Rating', type: 'slider', min: 1, max: 5, step: 0.1 }
+    ]},
+    { section: 'Billing & Insurance', fields: [
+      { key: 'outstanding_bills', label: 'Outstanding Bills ($)', type: 'number', min: 0, max: 50000 },
+      { key: 'claims_rejected', label: 'Claims Rejected', type: 'number', min: 0, max: 20 },
+      { key: 'copayment_amount', label: 'Copayment Amount ($)', type: 'number', min: 0, max: 2000 }
+    ]}
+  ]
 };
 
 const BENCHMARK = [
@@ -269,15 +451,32 @@ const ALL_MODELS = [
 
 /* ── Main page ─────────────────────────────────────────────────────────────── */
 
-export default function MultiIndustry() {
+export default function MultiIndustry({ onPredictionContext }) {
+  const { currency, currentCurrency, currencies, convertToUSD, convertFromUSD, format } = useCurrency();
   const [selectedIndustry, setSelectedIndustry] = useState('telecom');
   const [modelType, setModelType] = useState('random_forest');
-  const [form, setForm] = useState({ ...STATIC_DEFAULTS.telecom });
+  // Lazily initialize form state to convert defaults to active currency on first render
+  const [form, setForm] = useState(() => {
+    const base = { ...STATIC_DEFAULTS.telecom };
+    const rate = currencies[currency]?.rate || 1.0;
+    if (rate !== 1.0) {
+      CURRENCY_KEYS.forEach(k => {
+        if (base[k] !== undefined) {
+          base[k] = parseFloat((base[k] * rate).toFixed(2));
+        }
+      });
+    }
+    return base;
+  });
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [benchmarkData, setBenchmarkData] = useState(BENCHMARK);
   const [activeTab, setActiveTab] = useState('form');
+  const [prevCurrency, setPrevCurrency] = useState(currency);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   useEffect(() => {
     industryAPI.getBenchmark()
@@ -285,24 +484,105 @@ export default function MultiIndustry() {
       .catch(() => {});
   }, []);
 
+  // Currency transition hook
+  useEffect(() => {
+    if (currency !== prevCurrency) {
+      setForm(prev => {
+        const oldRate = currencies[prevCurrency].rate;
+        const newRate = currencies[currency].rate;
+        const converted = { ...prev };
+
+        CURRENCY_KEYS.forEach(k => {
+          if (converted[k] !== undefined) {
+            converted[k] = parseFloat((converted[k] / oldRate * newRate).toFixed(2));
+          }
+        });
+        return converted;
+      });
+      setPrevCurrency(currency);
+    }
+  }, [currency, prevCurrency, currencies]);
+
   const handleIndustryChange = (key) => {
     setSelectedIndustry(key);
-    setForm({ ...STATIC_DEFAULTS[key] });
+    const base = { ...STATIC_DEFAULTS[key] };
+
+    CURRENCY_KEYS.forEach(k => {
+      if (base[k] !== undefined) {
+        base[k] = parseFloat((base[k] * currentCurrency.rate).toFixed(2));
+      }
+    });
+    setForm(base);
     setResult(null);
     setError('');
   };
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    const parsedVal = type === 'number' || type === 'range' ? (parseFloat(value) ?? 0) : value;
+
+    // Reset active template selection since user has manually customized the form values
+    setSelectedTemplate('');
+
+    // Find field in current schema to validate limits
+    const currentSchema = FIELD_SCHEMAS[selectedIndustry] || [];
+    let fieldObj = null;
+    for (const sec of currentSchema) {
+      const f = sec.fields.find(field => field.key === name);
+      if (f) { fieldObj = f; break; }
+    }
+
+    if (fieldObj && (type === 'number' || type === 'range')) {
+      const num = parseFloat(value);
+      if (isNaN(num)) {
+        setValidationErrors(prev => ({ ...prev, [name]: 'Must be a valid number' }));
+      } else {
+        // Scale min/max limits if the field represents a currency amount
+        const isCurrency = CURRENCY_KEYS.includes(name);
+        const minLimit = fieldObj.min !== undefined ? (isCurrency ? parseFloat((fieldObj.min * currentCurrency.rate).toFixed(2)) : fieldObj.min) : undefined;
+        const maxLimit = fieldObj.max !== undefined ? (isCurrency ? parseFloat((fieldObj.max * currentCurrency.rate).toFixed(2)) : fieldObj.max) : undefined;
+
+        if (minLimit !== undefined && num < minLimit) {
+          const formattedMin = isCurrency ? `${currentCurrency.symbol}${minLimit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : minLimit;
+          setValidationErrors(prev => ({ ...prev, [name]: `${fieldObj.label} must be >= ${formattedMin}` }));
+        } else if (maxLimit !== undefined && num > maxLimit) {
+          const formattedMax = isCurrency ? `${currentCurrency.symbol}${maxLimit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : maxLimit;
+          setValidationErrors(prev => ({ ...prev, [name]: `${fieldObj.label} must be <= ${formattedMax}` }));
+        } else {
+          setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+          });
+        }
+      }
+    } else {
+      setValidationErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+
     setForm(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: parsedVal,
     }));
   };
 
   const applyTemplate = (templateKey) => {
     const tpl = TEMPLATES[selectedIndustry]?.[templateKey];
-    if (tpl) { setForm({ ...tpl }); setResult(null); }
+    if (tpl) {
+      const base = { ...tpl };
+  
+      CURRENCY_KEYS.forEach(k => {
+        if (base[k] !== undefined) {
+          base[k] = parseFloat((base[k] * currentCurrency.rate).toFixed(2));
+        }
+      });
+      setForm(base);
+      setResult(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -311,7 +591,24 @@ export default function MultiIndustry() {
     setError('');
     setResult(null);
     try {
-      const res = await industryAPI.predict(selectedIndustry, form, modelType);
+      // Convert currency values back to USD before sending to backend API
+      const convertedForm = { ...form };
+  
+      CURRENCY_KEYS.forEach(k => {
+        if (convertedForm[k] !== undefined) {
+          convertedForm[k] = convertToUSD(convertedForm[k]);
+        }
+      });
+
+      // Convert specific keys to integer 1/0 for backend compatibility
+      const binaryIntKeys = ['has_credit_card', 'is_active_member'];
+      binaryIntKeys.forEach(k => {
+        if (convertedForm[k] !== undefined) {
+          convertedForm[k] = convertedForm[k] === 'Yes' ? 1 : 0;
+        }
+      });
+
+      const res = await industryAPI.predict(selectedIndustry, convertedForm, modelType);
       setResult(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Prediction failed. Please try again.');
@@ -337,9 +634,9 @@ export default function MultiIndustry() {
       <div className="page-header animate-fade-in">
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ background: 'rgba(99,102,241,0.2)', borderRadius: 12, padding: '6px 10px', display: 'flex' }}>
-            <HiOutlineGlobe style={{ fontSize: '1.1rem', color: '#a78bfa' }} />
+            <HiOutlineLightningBolt style={{ fontSize: '1.1rem', color: '#a78bfa' }} />
           </span>
-          Multi-Industry Analytics
+          Churn Prediction Suite
         </h1>
         <p>Predict customer churn across Telecom, Banking, E-commerce & Healthcare verticals</p>
       </div>
@@ -429,61 +726,80 @@ export default function MultiIndustry() {
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
                 {ALL_MODELS.map(m => (
-                  <div
+                  <motion.div
                     key={m.key}
                     onClick={() => setModelType(m.key)}
                     title={m.desc}
+                    whileHover={{ scale: 1.05, translateY: -2 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 18 }}
                     style={{
                       padding: '10px 4px', borderRadius: 10, cursor: 'pointer', textAlign: 'center',
                       border: `1.5px solid ${modelType === m.key ? m.color : 'rgba(255,255,255,0.07)'}`,
                       background: modelType === m.key ? `${m.color}14` : 'rgba(255,255,255,0.02)',
-                      transition: 'all 0.2s',
                     }}
                   >
                     <div style={{ fontSize: '1.2rem', marginBottom: 3 }}>{m.icon}</div>
                     <div style={{ color: modelType === m.key ? m.color : '#64748b', fontSize: '0.62rem', fontWeight: 600, lineHeight: 1.2 }}>{m.name}</div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
 
-            {/* Quick-Fill Templates */}
-            <div className="glass-card animate-fade-in-up" style={{ marginBottom: 20, padding: '14px 16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            {/* Quick-Fill Templates Selector */}
+            <div className="glass-card animate-fade-in-up" style={{ marginBottom: 20, padding: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <HiOutlineLightningBolt style={{ fontSize: '0.9rem' }} /> Quick-Fill Templates
+                  <Zap size={14} className="text-amber-400" /> Quick-Fill Templates
                 </span>
-                <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Instant customer profiles</span>
+                <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Apply predefined profiles</span>
               </div>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {[
-                  { key: 'high_risk', label: 'High Risk', dot: C.rose, color: C.rose },
-                  { key: 'medium_risk', label: 'Medium Risk', dot: C.amber, color: C.amber },
-                  { key: 'low_risk', label: 'Low Risk', dot: C.emerald, color: C.emerald },
-                ].map(tpl => (
-                  <button
-                    key={tpl.key}
-                    onClick={() => applyTemplate(tpl.key)}
-                    style={{
-                      flex: 1, padding: '8px 12px', borderRadius: 10, border: `1px solid ${tpl.color}30`,
-                      background: `${tpl.color}0d`, color: tpl.color, fontSize: '0.78rem', fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = `${tpl.color}1a`; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = `${tpl.color}0d`; }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: tpl.dot, display: 'inline-block' }} />
-                    {tpl.label}
-                  </button>
-                ))}
+                  { key: 'high_risk', label: 'High Risk', icon: <AlertTriangle size={14} />, color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.08)', activeBg: 'rgba(244, 63, 94, 0.16)' },
+                  { key: 'medium_risk', label: 'Medium Risk', icon: <AlertCircle size={14} />, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.08)', activeBg: 'rgba(245, 158, 11, 0.16)' },
+                  { key: 'low_risk', label: 'Low Risk', icon: <CheckCircle size={14} />, color: '#10b981', bg: 'rgba(16, 185, 129, 0.08)', activeBg: 'rgba(16, 185, 129, 0.16)' }
+                ].map(t => {
+                  const isActive = selectedTemplate === t.key;
+                  return (
+                    <motion.button
+                      key={t.key}
+                      type="button"
+                      whileHover={{ scale: 1.02, translateY: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        applyTemplate(t.key);
+                        setSelectedTemplate(t.key);
+                      }}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: 10,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        transition: 'all 0.2s',
+                        color: t.color,
+                        background: isActive ? t.activeBg : 'rgba(255, 255, 255, 0.02)',
+                        border: `1.5px solid ${isActive ? t.color : 'rgba(255, 255, 255, 0.06)'}`,
+                        boxShadow: isActive ? `0 0 12px ${t.color}1e` : 'none',
+                      }}
+                    >
+                      {t.icon}
+                      {t.label}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
 
             {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
 
             {/* Dynamic Form */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {schema.map((section, si) => (
                 <div key={si} className="glass-card animate-fade-in-up" style={{ animationDelay: `${si * 80}ms`, marginBottom: 18 }}>
                   <h3 style={{ color: '#e2e8f0', marginBottom: 16, fontSize: '0.92rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -491,21 +807,94 @@ export default function MultiIndustry() {
                     {section.section}
                   </h3>
                   <div className="predict-form-grid">
-                    {section.fields.map(field => (
-                      <div key={field.key} className="form-group">
-                        <label className="form-label">{field.label}</label>
-                        {field.type === 'select' ? (
-                          <select name={field.key} value={form[field.key] ?? ''} onChange={handleChange} className="form-select">
-                            {field.options.map((opt, oi) => (
-                              <option key={oi} value={opt}>{field.labels ? field.labels[oi] : String(opt)}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input type="number" name={field.key} value={form[field.key] ?? ''} onChange={handleChange}
-                            className="form-input" min={field.min} max={field.max} step={field.step || 1} />
-                        )}
-                      </div>
-                    ))}
+                    {section.fields.map(field => {
+                      const displayLabel = field.label.replace('($)', `(${currentCurrency?.symbol || '$'})`);
+                      const hasError = !!validationErrors[field.key];
+                      
+                      // Calculate currency scaled bounds for HTML5 attributes
+                      const isCurrency = CURRENCY_KEYS.includes(field.key);
+                      const localMin = field.min !== undefined ? (isCurrency ? Math.floor(field.min * currentCurrency.rate) : field.min) : undefined;
+                      const localMax = field.max !== undefined ? (isCurrency ? Math.ceil(field.max * currentCurrency.rate) : field.max) : undefined;
+
+                      return (
+                        <div key={field.key} className="form-group" style={{ marginBottom: 16 }}>
+                          <label className="form-label" style={{ color: hasError ? '#f43f5e' : 'var(--text-secondary)' }}>
+                            {displayLabel}
+                          </label>
+                          
+                          {field.type === 'select' && (
+                            <select name={field.key} value={form[field.key] ?? ''} onChange={handleChange} className="form-select"
+                              style={{ borderColor: hasError ? '#f43f5e' : 'var(--glass-border)' }}>
+                              {field.options.map((opt, oi) => (
+                                <option key={oi} value={opt}>{field.labels ? field.labels[oi] : String(opt)}</option>
+                              ))}
+                            </select>
+                          )}
+                          
+                          {field.type === 'radio' && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 6, minHeight: 38, alignItems: 'center' }}>
+                              {field.options.map((opt, oi) => (
+                                <label key={oi} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.82rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                                  <input type="radio" name={field.key} value={opt} checked={form[field.key] === opt} onChange={handleChange}
+                                    style={{ accentColor: '#8b5cf6', cursor: 'pointer' }} />
+                                  {field.labels ? field.labels[oi] : String(opt)}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {field.type === 'toggle' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, minHeight: 38 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const val = form[field.key] === 'Yes' ? 'No' : 'Yes';
+                                  handleChange({ target: { name: field.key, value: val, type: 'text' } });
+                                }}
+                                style={{
+                                  width: 44, height: 22, borderRadius: 12,
+                                  background: form[field.key] === 'Yes' ? '#8b5cf6' : 'rgba(255, 255, 255, 0.08)',
+                                  border: '1px solid rgba(255,255,255,0.05)',
+                                  position: 'relative', cursor: 'pointer', transition: 'all 0.2s', padding: 0
+                                }}
+                              >
+                                <div style={{
+                                  width: 16, height: 16, borderRadius: '50%', background: 'white',
+                                  position: 'absolute', top: 2,
+                                  left: form[field.key] === 'Yes' ? 24 : 3,
+                                  transition: 'all 0.2s',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                }} />
+                              </button>
+                              <span style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>{form[field.key]}</span>
+                            </div>
+                          )}
+                          
+                          {field.type === 'slider' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, minHeight: 38 }}>
+                              <input type="range" name={field.key} min={localMin} max={localMax} step={field.step || 1}
+                                value={form[field.key] ?? localMin} onChange={handleChange}
+                                style={{ flex: 1, accentColor: '#8b5cf6', cursor: 'pointer', height: 4, borderRadius: 2 }} />
+                              <span style={{ fontSize: '0.82rem', color: '#a78bfa', fontWeight: 700, minWidth: 32, textAlign: 'right' }}>
+                                {form[field.key]}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {field.type === 'number' && (
+                            <input type="number" name={field.key} value={form[field.key] ?? ''} onChange={handleChange}
+                              className="form-input" min={localMin} max={localMax} step={field.step || 1}
+                              style={{ borderColor: hasError ? '#f43f5e' : 'var(--glass-border)' }} />
+                          )}
+                          
+                          {hasError && (
+                            <div style={{ color: '#f43f5e', fontSize: '0.72rem', marginTop: 4, fontWeight: 500 }}>
+                              {validationErrors[field.key]}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -590,6 +979,44 @@ export default function MultiIndustry() {
                   ))}
                 </div>
               </div>
+
+                {/* Ask AI Button */}
+                {onPredictionContext && (
+                  <button
+                    className="btn btn-primary"
+                    style={{
+                      marginTop: '16px',
+                      width: '100%',
+                      padding: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                      border: 'none',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'white',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      transition: 'var(--transition-normal)',
+                    }}
+                    onClick={() => {
+                      onPredictionContext({
+                        prediction_id: result.id,
+                        churn_probability: result.churn_probability,
+                        risk_level: result.risk_level,
+                        model_used: result.model_used,
+                        contributing_factors: result.contributing_factors || [],
+                        industry: selectedIndustry,
+                        chat_trigger_timestamp: Date.now(),
+                        ...form,
+                      });
+                    }}
+                  >
+                    🪐 Ask AI About This Prediction
+                  </button>
+                )}
             </div>
           )}
         </div>

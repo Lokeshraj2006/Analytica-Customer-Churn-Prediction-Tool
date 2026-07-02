@@ -18,7 +18,7 @@ import Settings from './pages/Settings';
 import AdminPanel from './pages/AdminPanel';
 import EDA from './pages/EDA';
 
-// V4.0 new pages
+// V1.0 new pages
 import Explainability from './pages/Explainability';
 import Simulator from './pages/Simulator';
 import Segments from './pages/Segments';
@@ -75,7 +75,7 @@ function App() {
               </PR>
             } />
 
-            {/* V4.0 new pages */}
+            {/* V1.0 new pages */}
             <Route path="/explainability" element={<PR predictionContext={predictionContext}><Explainability /></PR>} />
             <Route path="/explainability/:predictionId" element={<PR predictionContext={predictionContext}><Explainability /></PR>} />
             <Route path="/simulator" element={<PR predictionContext={predictionContext}><Simulator /></PR>} />
@@ -84,7 +84,7 @@ function App() {
             <Route path="/data-quality" element={<PR predictionContext={predictionContext}><DataQuality /></PR>} />
             <Route path="/tuning" element={<PR predictionContext={predictionContext}><Tuning /></PR>} />
             <Route path="/clv" element={<PR predictionContext={predictionContext}><CLV /></PR>} />
-            <Route path="/multi-industry" element={<PR predictionContext={predictionContext}><MultiIndustry /></PR>} />
+            <Route path="/multi-industry" element={<Navigate to="/predict" replace />} />
 
             {/* Settings & Admin */}
             <Route path="/settings" element={<PR predictionContext={predictionContext}><Settings /></PR>} />
